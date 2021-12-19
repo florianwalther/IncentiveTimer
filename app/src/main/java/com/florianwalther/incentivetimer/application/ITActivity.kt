@@ -1,16 +1,12 @@
-package com.florianwalther.incentivetimer
+package com.florianwalther.incentivetimer.application
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.List
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.runtime.Composable
@@ -25,6 +21,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.rewardlist.RewardListScreen
 import com.florianwalther.incentivetimer.timer.TimerScreen
 import com.florianwalther.incentivetimer.ui.theme.IncentiveTimerTheme

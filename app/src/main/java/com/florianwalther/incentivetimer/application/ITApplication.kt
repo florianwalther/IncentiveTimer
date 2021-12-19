@@ -1,4 +1,4 @@
-package com.florianwalther.incentivetimer
+package com.florianwalther.incentivetimer.application
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp

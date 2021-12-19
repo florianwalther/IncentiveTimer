@@ -88,6 +88,12 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:$lifecycle_version"
     kapt "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"
 
+    // Room
+    def room_version = "2.4.0"
+    implementation "androidx.room:room-runtime:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
+    implementation "androidx.room:room-ktx:$room_version"
+
     // Hilt
     implementation "com.google.dagger:hilt-android:2.38.1"
     kapt "com.google.dagger:hilt-compiler:2.38.1"
