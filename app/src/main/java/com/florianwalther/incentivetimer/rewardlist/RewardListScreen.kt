@@ -23,7 +23,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.florianwalther.incentivetimer.R
+import com.florianwalther.incentivetimer.application.FullScreenDestinations
 import com.florianwalther.incentivetimer.data.Reward
 import com.florianwalther.incentivetimer.ui.IconKeys
 import com.florianwalther.incentivetimer.ui.ListBottomPadding
@@ -33,14 +35,23 @@ import com.florianwalther.incentivetimer.ui.theme.IncentiveTimerTheme
 import kotlinx.coroutines.launch
 
 @Composable
-fun RewardListScreen(viewModel: RewardListViewModel = hiltViewModel()) {
+fun RewardListScreen(
+    navController: NavController,
+    viewModel: RewardListViewModel = hiltViewModel()
+) {
     val rewards by viewModel.rewards.observeAsState(listOf())
-    ScreenContent(rewards)
+    ScreenContent(
+        rewards = rewards,
+        onAddNewRewardClicked = {
+            navController.navigate(FullScreenDestinations.AddEditRewardScreen.route)
+        }
+    )
 }
 
 @Composable
 private fun ScreenContent(
     rewards: List<Reward>,
+    onAddNewRewardClicked: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -50,7 +61,7 @@ private fun ScreenContent(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /*TODO*/ },
+                onClick = onAddNewRewardClicked,
                 modifier = Modifier.padding(16.dp)
             ) {
                 Icon(
@@ -63,11 +74,7 @@ private fun ScreenContent(
         val listState = rememberLazyListState()
         val coroutineScope = rememberCoroutineScope()
 
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
+        Box {
             LazyColumn(
                 contentPadding = PaddingValues(
                     top = 8.dp,
@@ -131,7 +138,7 @@ private fun RewardItem(
             )
             Column() {
                 Text(
-                    text = reward.title,
+                    text = reward.name,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
@@ -178,10 +185,11 @@ private fun ScreenContentPreview() {
         Surface {
             ScreenContent(
                 listOf(
-                    Reward(iconKey = IconKeys.CAKE, title = "CAKE", 5),
-                    Reward(iconKey = IconKeys.BATH_TUB, title = "BATH_TUB", 20),
-                    Reward(iconKey = IconKeys.TV, title = "TV", 60),
-                )
+                    Reward(iconKey = IconKeys.CAKE, name = "CAKE", 5),
+                    Reward(iconKey = IconKeys.BATH_TUB, name = "BATH_TUB", 20),
+                    Reward(iconKey = IconKeys.TV, name = "TV", 60),
+                ),
+                onAddNewRewardClicked = {}
             )
         }
     }
