@@ -17,4 +17,7 @@ interface RewardDao {
 
     @Update
     suspend fun updateReward(reward: Reward)
+
+    @Delete
+    suspend fun deleteReward(reward: Reward)
 }

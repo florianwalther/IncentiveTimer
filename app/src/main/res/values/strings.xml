@@ -15,4 +15,10 @@
     <string name="field_cant_be_blank">This field can\'t be blank</string>
     <string name="reward_added">Reward added</string>
     <string name="reward_updated">Reward updated</string>
+    <string name="open_menu">Open menu</string>
+    <string name="delete_reward">Delete reward</string>
+    <string name="confirm_deletion">Confirm deletion</string>
+    <string name="confirm_reward_deletion_text">Do you really want to delete this reward? This can not be undone!</string>
+    <string name="delete">Delete</string>
+    <string name="reward_deleted">Reward deleted</string>
 </resources>

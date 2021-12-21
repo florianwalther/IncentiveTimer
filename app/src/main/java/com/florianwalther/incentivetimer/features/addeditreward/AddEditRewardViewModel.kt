@@ -45,6 +45,9 @@ class AddEditRewardViewModel @Inject constructor(
         savedStateHandle.getLiveData<Boolean>("showRewardIconSelectionDialogLiveData", false)
     val showRewardIconSelectionDialog: LiveData<Boolean> = showRewardIconSelectionDialogLiveData
 
+    private val showDeleteRewardConfirmationDialogLiveData = savedStateHandle.getLiveData<Boolean>("showDeleteRewardConfirmationDialogLiveData")
+    val showDeleteRewardConfirmationDialog: LiveData<Boolean> = showDeleteRewardConfirmationDialogLiveData
+
     private val eventChannel = Channel<AddEditRewardEvent>()
     val events = eventChannel.receiveAsFlow()
 
@@ -89,6 +92,7 @@ class AddEditRewardViewModel @Inject constructor(
     sealed class AddEditRewardEvent {
         object RewardCreated : AddEditRewardEvent()
         object RewardUpdated : AddEditRewardEvent()
+        object RewardDeleted : AddEditRewardEvent()
     }
 
     override fun onRewardNameInputChanged(input: String) {
@@ -107,7 +111,7 @@ class AddEditRewardViewModel @Inject constructor(
         rewardIconKeySelectionLiveData.value = iconKey
     }
 
-    override fun onRewardIconDialogDismissRequest() {
+    override fun onRewardIconDialogDismissed() {
         showRewardIconSelectionDialogLiveData.value = false
     }
 
@@ -149,13 +153,30 @@ class AddEditRewardViewModel @Inject constructor(
     private suspend fun updateReward(reward: Reward) {
         rewardDao.updateReward(reward)
         eventChannel.send(AddEditRewardEvent.RewardUpdated)
-        // TODO: 20/12/2021 Show confirmation message
     }
 
     private suspend fun createReward(reward: Reward) {
         rewardDao.insertReward(reward)
         eventChannel.send(AddEditRewardEvent.RewardCreated)
-        // TODO: 20/12/2021 Show confirmation message
+    }
+
+    override fun onDeleteRewardClicked() {
+        showDeleteRewardConfirmationDialogLiveData.value = true
+    }
+
+    override fun onDeleteRewardConfirmed() {
+        showDeleteRewardConfirmationDialogLiveData.value = false
+        viewModelScope.launch {
+            val reward = reward
+            if (reward != null) {
+                rewardDao.deleteReward(reward)
+                eventChannel.send(AddEditRewardEvent.RewardDeleted)
+            }
+        }
+    }
+
+    override fun onDeleteRewardDialogDismissed() {
+        showDeleteRewardConfirmationDialogLiveData.value = false
     }
 }
 
@@ -165,3 +186,4 @@ const val NO_REWARD_ID = -1L
 const val ADD_EDIT_REWARD_RESULT = "ADD_EDIT_REWARD_RESULT"
 const val RESULT_REWARD_ADDED = "RESULT_REWARD_ADDED"
 const val RESULT_REWARD_UPDATED = "RESULT_REWARD_UPDATED"
+const val RESULT_REWARD_DELETE = "RESULT_REWARD_DELETED"

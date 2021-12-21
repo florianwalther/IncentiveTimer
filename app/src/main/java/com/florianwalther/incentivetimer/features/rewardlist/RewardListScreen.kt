@@ -32,10 +32,7 @@ import com.florianwalther.incentivetimer.data.Reward
 import com.florianwalther.incentivetimer.core.ui.IconKey
 import com.florianwalther.incentivetimer.core.ui.ListBottomPadding
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
-import com.florianwalther.incentivetimer.features.addeditreward.ADD_EDIT_REWARD_RESULT
-import com.florianwalther.incentivetimer.features.addeditreward.ARG_REWARD_ID
-import com.florianwalther.incentivetimer.features.addeditreward.RESULT_REWARD_ADDED
-import com.florianwalther.incentivetimer.features.addeditreward.RESULT_REWARD_UPDATED
+import com.florianwalther.incentivetimer.features.addeditreward.*
 import kotlinx.coroutines.launch
 
 @Composable
@@ -61,6 +58,9 @@ fun RewardListScreen(
                 }
                 RESULT_REWARD_UPDATED -> {
                     scaffoldState.snackbarHostState.showSnackbar(context.getString(R.string.reward_updated))
+                }
+                RESULT_REWARD_DELETE -> {
+                    scaffoldState.snackbarHostState.showSnackbar(context.getString(R.string.reward_deleted))
                 }
             }
         }
