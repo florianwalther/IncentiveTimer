@@ -1,4 +1,4 @@
-package com.florianwalther.incentivetimer.ui
+package com.florianwalther.incentivetimer.core.ui
 
 import androidx.compose.ui.unit.dp
 

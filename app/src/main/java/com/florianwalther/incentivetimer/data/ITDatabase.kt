@@ -4,7 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.florianwalther.incentivetimer.di.ApplicationScope
-import com.florianwalther.incentivetimer.ui.IconKeys
+import com.florianwalther.incentivetimer.core.ui.IconKey
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -28,21 +28,21 @@ abstract class ITDatabase : RoomDatabase() {
             applicationScope.launch {
                 rewardDao.insertReward(
                     Reward(
-                        iconKey = IconKeys.CAKE,
+                        iconKey = IconKey.CAKE,
                         name = "1 piece of cake",
                         chanceInPercent = 5
                     )
                 )
                 rewardDao.insertReward(
                     Reward(
-                        iconKey = IconKeys.BATH_TUB,
+                        iconKey = IconKey.BATH_TUB,
                         name = "Take a bath",
                         chanceInPercent = 7
                     )
                 )
                 rewardDao.insertReward(
                     Reward(
-                        iconKey = IconKeys.TV,
+                        iconKey = IconKey.TV,
                         name = "Watch 1 episode of my favorite show",
                         chanceInPercent = 10
                     )

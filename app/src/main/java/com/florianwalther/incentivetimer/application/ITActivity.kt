@@ -17,15 +17,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.florianwalther.incentivetimer.R
-import com.florianwalther.incentivetimer.addeditreward.AddEditRewardScreen
-import com.florianwalther.incentivetimer.rewardlist.RewardListScreen
-import com.florianwalther.incentivetimer.timer.TimerScreen
-import com.florianwalther.incentivetimer.ui.theme.IncentiveTimerTheme
+import com.florianwalther.incentivetimer.features.addeditreward.AddEditRewardScreen
+import com.florianwalther.incentivetimer.features.rewardlist.RewardListScreen
+import com.florianwalther.incentivetimer.features.timer.TimerScreen
+import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
+import com.florianwalther.incentivetimer.features.addeditreward.ARG_REWARD_ID
+import com.florianwalther.incentivetimer.features.addeditreward.NO_REWARD_ID
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -80,13 +84,22 @@ private fun ScreenContent() {
             startDestination = bottomNavDestinations[0].route,
             modifier = Modifier.padding(innerPadding),
         ) {
-            composable(BottomNavDestinations.TimerScreen.route) {
+            composable(
+                route = BottomNavDestinations.TimerScreen.route
+            ) {
                 TimerScreen(navController)
             }
-            composable(BottomNavDestinations.RewardListScreen.route) {
+            composable(
+                route = BottomNavDestinations.RewardListScreen.route
+            ) {
                 RewardListScreen(navController)
             }
-            composable(FullScreenDestinations.AddEditRewardScreen.route) {
+            composable(
+                route = FullScreenDestinations.AddEditRewardScreen.route + "?$ARG_REWARD_ID={$ARG_REWARD_ID}",
+                arguments = listOf(navArgument(ARG_REWARD_ID) {
+                    defaultValue = NO_REWARD_ID
+                })
+            ) {
                 AddEditRewardScreen(navController)
             }
         }
@@ -104,9 +117,11 @@ sealed class BottomNavDestinations(
     val icon: ImageVector,
     @StringRes val label: Int
 ) {
-    object TimerScreen : BottomNavDestinations(route ="timer", Icons.Outlined.Timer, R.string.timer)
+    object TimerScreen :
+        BottomNavDestinations(route = "timer", Icons.Outlined.Timer, R.string.timer)
+
     object RewardListScreen :
-        BottomNavDestinations(route ="reward_list", Icons.Outlined.List, R.string.reward_list)
+        BottomNavDestinations(route = "reward_list", Icons.Outlined.List, R.string.reward_list)
 }
 
 sealed class FullScreenDestinations(

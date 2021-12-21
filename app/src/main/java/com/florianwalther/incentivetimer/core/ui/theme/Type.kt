@@ -1,4 +1,4 @@
-package com.florianwalther.incentivetimer.ui.theme
+package com.florianwalther.incentivetimer.core.ui.theme
 
 import androidx.compose.material.Typography
 import androidx.compose.ui.text.TextStyle

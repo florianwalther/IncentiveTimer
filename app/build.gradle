@@ -99,6 +99,12 @@ dependencies {
     kapt "com.google.dagger:hilt-compiler:2.38.1"
     implementation 'androidx.hilt:hilt-navigation-compose:1.0.0-rc01'
 
+    // Accompanist libraries
+    implementation "com.google.accompanist:accompanist-flowlayout:0.21.4-beta"
+
+    // Logcat
+    implementation 'com.squareup.logcat:logcat:0.1'
+
 }
 
 kapt {

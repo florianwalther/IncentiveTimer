@@ -1,4 +1,4 @@
-package com.florianwalther.incentivetimer.rewardlist
+package com.florianwalther.incentivetimer.features.rewardlist
 
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
@@ -27,11 +27,10 @@ import androidx.navigation.NavController
 import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.application.FullScreenDestinations
 import com.florianwalther.incentivetimer.data.Reward
-import com.florianwalther.incentivetimer.ui.IconKeys
-import com.florianwalther.incentivetimer.ui.ListBottomPadding
-import com.florianwalther.incentivetimer.ui.defaultIcon
-import com.florianwalther.incentivetimer.ui.rewardIcons
-import com.florianwalther.incentivetimer.ui.theme.IncentiveTimerTheme
+import com.florianwalther.incentivetimer.core.ui.IconKey
+import com.florianwalther.incentivetimer.core.ui.ListBottomPadding
+import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
+import com.florianwalther.incentivetimer.features.addeditreward.ARG_REWARD_ID
 import kotlinx.coroutines.launch
 
 @Composable
@@ -44,6 +43,9 @@ fun RewardListScreen(
         rewards = rewards,
         onAddNewRewardClicked = {
             navController.navigate(FullScreenDestinations.AddEditRewardScreen.route)
+        },
+        onRewardItemClicked = { id ->
+            navController.navigate(FullScreenDestinations.AddEditRewardScreen.route + "?$ARG_REWARD_ID=$id")
         }
     )
 }
@@ -51,6 +53,7 @@ fun RewardListScreen(
 @Composable
 private fun ScreenContent(
     rewards: List<Reward>,
+    onRewardItemClicked: (Long) -> Unit,
     onAddNewRewardClicked: () -> Unit,
 ) {
     Scaffold(
@@ -86,7 +89,9 @@ private fun ScreenContent(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(rewards) { reward ->
-                    RewardItem(reward)
+                    RewardItem(reward, onItemClicked = { id ->
+                        onRewardItemClicked(id)
+                    })
                 }
             }
             AnimatedVisibility(
@@ -108,8 +113,7 @@ private fun ScreenContent(
                     Icon(
                         imageVector = Icons.Default.ExpandLess,
                         contentDescription = stringResource(R.string.scroll_to_top),
-
-                        )
+                    )
                 }
             }
         }
@@ -119,17 +123,18 @@ private fun ScreenContent(
 @Composable
 private fun RewardItem(
     reward: Reward,
+    onItemClicked: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
-        onClick = {},
+        onClick = { onItemClicked(reward.id) },
         modifier = modifier
             .fillMaxWidth()
             .padding(8.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = rewardIcons[reward.iconKey] ?: defaultIcon,
+                imageVector = reward.iconKey.rewardIcon,
                 contentDescription = null,
                 modifier = Modifier
                     .padding(8.dp)
@@ -164,7 +169,7 @@ private fun RewardItem(
 private fun RewardItemPreview() {
     IncentiveTimerTheme {
         Surface {
-            RewardItem(Reward(IconKeys.BATH_TUB, "Title", 5))
+            RewardItem(Reward("Title", 5, IconKey.BATH_TUB), onItemClicked = {})
         }
     }
 }
@@ -185,11 +190,12 @@ private fun ScreenContentPreview() {
         Surface {
             ScreenContent(
                 listOf(
-                    Reward(iconKey = IconKeys.CAKE, name = "CAKE", 5),
-                    Reward(iconKey = IconKeys.BATH_TUB, name = "BATH_TUB", 20),
-                    Reward(iconKey = IconKeys.TV, name = "TV", 60),
+                    Reward(name = "CAKE", 5, iconKey = IconKey.CAKE),
+                    Reward(name = "BATH_TUB", 20, iconKey = IconKey.BATH_TUB),
+                    Reward(name = "TV", 60, iconKey = IconKey.TV),
                 ),
-                onAddNewRewardClicked = {}
+                onAddNewRewardClicked = {},
+                onRewardItemClicked = {}
             )
         }
     }
