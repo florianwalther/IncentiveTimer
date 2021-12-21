@@ -17,7 +17,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -49,32 +48,33 @@ private fun ScreenContent() {
     val navController = rememberNavController()
     Scaffold(
         bottomBar = {
-            BottomNavigation {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
-                bottomNavDestinations.forEach { bottomNavDestination ->
-                    BottomNavigationItem(
-                        icon = {
-                            Icon(
-                                bottomNavDestination.icon,
-                                contentDescription = null
-                            )
-                        },
-                        label = {
-                            Text(stringResource(bottomNavDestination.label))
-                        },
-                        alwaysShowLabel = false,
-                        selected = currentDestination?.hierarchy?.any { it.route == bottomNavDestination.route } == true,
-                        onClick = {
-                            navController.navigate(bottomNavDestination.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentDestination = navBackStackEntry?.destination
+            val hideBottomBar = navBackStackEntry?.arguments?.getBoolean(ARG_HIDE_BOTTOM_BAR)
+
+            if (hideBottomBar == null || !hideBottomBar) {
+                BottomNavigation {
+                    bottomNavDestinations.forEach { bottomNavDestination ->
+                        BottomNavigationItem(
+                            icon = {
+                                Icon(bottomNavDestination.icon, contentDescription = null)
+                            },
+                            label = {
+                                Text(stringResource(bottomNavDestination.label))
+                            },
+                            alwaysShowLabel = false,
+                            selected = currentDestination?.hierarchy?.any { it.route == bottomNavDestination.route } == true,
+                            onClick = {
+                                navController.navigate(bottomNavDestination.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                    )
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -96,9 +96,14 @@ private fun ScreenContent() {
             }
             composable(
                 route = FullScreenDestinations.AddEditRewardScreen.route + "?$ARG_REWARD_ID={$ARG_REWARD_ID}",
-                arguments = listOf(navArgument(ARG_REWARD_ID) {
-                    defaultValue = NO_REWARD_ID
-                })
+                arguments = listOf(
+                    navArgument(ARG_REWARD_ID) {
+                        defaultValue = NO_REWARD_ID
+                    },
+                    navArgument(ARG_HIDE_BOTTOM_BAR) {
+                        defaultValue = true
+                    }
+                )
             ) {
                 AddEditRewardScreen(navController)
             }
@@ -129,6 +134,8 @@ sealed class FullScreenDestinations(
 ) {
     object AddEditRewardScreen : FullScreenDestinations(route = "add_edit_reward")
 }
+
+const val ARG_HIDE_BOTTOM_BAR = "ARG_HIDE_BOTTOM_BAR"
 
 @Preview(showBackground = true)
 @Composable

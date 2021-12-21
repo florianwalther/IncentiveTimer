@@ -12,12 +12,14 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,7 +32,10 @@ import com.florianwalther.incentivetimer.data.Reward
 import com.florianwalther.incentivetimer.core.ui.IconKey
 import com.florianwalther.incentivetimer.core.ui.ListBottomPadding
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
+import com.florianwalther.incentivetimer.features.addeditreward.ADD_EDIT_REWARD_RESULT
 import com.florianwalther.incentivetimer.features.addeditreward.ARG_REWARD_ID
+import com.florianwalther.incentivetimer.features.addeditreward.RESULT_REWARD_ADDED
+import com.florianwalther.incentivetimer.features.addeditreward.RESULT_REWARD_UPDATED
 import kotlinx.coroutines.launch
 
 @Composable
@@ -39,6 +44,28 @@ fun RewardListScreen(
     viewModel: RewardListViewModel = hiltViewModel()
 ) {
     val rewards by viewModel.rewards.observeAsState(listOf())
+
+    val addEditRewardResult = navController.currentBackStackEntry
+        ?.savedStateHandle?.getLiveData<String>(ADD_EDIT_REWARD_RESULT)?.observeAsState()
+
+    val scaffoldState = rememberScaffoldState()
+
+    val context = LocalContext.current
+
+    LaunchedEffect(key1 = addEditRewardResult) {
+        navController.currentBackStackEntry?.savedStateHandle?.remove<String>(ADD_EDIT_REWARD_RESULT)
+        addEditRewardResult?.value?.let { addEditRewardResult ->
+            when (addEditRewardResult) {
+                RESULT_REWARD_ADDED -> {
+                    scaffoldState.snackbarHostState.showSnackbar(context.getString(R.string.reward_added))
+                }
+                RESULT_REWARD_UPDATED -> {
+                    scaffoldState.snackbarHostState.showSnackbar(context.getString(R.string.reward_updated))
+                }
+            }
+        }
+    }
+
     ScreenContent(
         rewards = rewards,
         onAddNewRewardClicked = {
@@ -46,7 +73,8 @@ fun RewardListScreen(
         },
         onRewardItemClicked = { id ->
             navController.navigate(FullScreenDestinations.AddEditRewardScreen.route + "?$ARG_REWARD_ID=$id")
-        }
+        },
+        scaffoldState = scaffoldState
     )
 }
 
@@ -55,6 +83,7 @@ private fun ScreenContent(
     rewards: List<Reward>,
     onRewardItemClicked: (Long) -> Unit,
     onAddNewRewardClicked: () -> Unit,
+    scaffoldState: ScaffoldState = rememberScaffoldState(),
 ) {
     Scaffold(
         topBar = {
@@ -65,7 +94,7 @@ private fun ScreenContent(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddNewRewardClicked,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(end = 16.dp, bottom = 16.dp)
             ) {
                 Icon(
                     Icons.Default.Add,
@@ -73,6 +102,7 @@ private fun ScreenContent(
                 )
             }
         },
+        scaffoldState = scaffoldState,
     ) {
         val listState = rememberLazyListState()
         val coroutineScope = rememberCoroutineScope()
@@ -195,7 +225,7 @@ private fun ScreenContentPreview() {
                     Reward(name = "TV", 60, iconKey = IconKey.TV),
                 ),
                 onAddNewRewardClicked = {},
-                onRewardItemClicked = {}
+                onRewardItemClicked = {},
             )
         }
     }

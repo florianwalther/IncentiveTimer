@@ -13,4 +13,6 @@
     <string name="select_icon">Select icon</string>
     <string name="cancel">Cancel</string>
     <string name="field_cant_be_blank">This field can\'t be blank</string>
+    <string name="reward_added">Reward added</string>
+    <string name="reward_updated">Reward updated</string>
 </resources>

@@ -161,3 +161,7 @@ class AddEditRewardViewModel @Inject constructor(
 
 const val ARG_REWARD_ID = "rewardId"
 const val NO_REWARD_ID = -1L
+
+const val ADD_EDIT_REWARD_RESULT = "ADD_EDIT_REWARD_RESULT"
+const val RESULT_REWARD_ADDED = "RESULT_REWARD_ADDED"
+const val RESULT_REWARD_UPDATED = "RESULT_REWARD_UPDATED"
