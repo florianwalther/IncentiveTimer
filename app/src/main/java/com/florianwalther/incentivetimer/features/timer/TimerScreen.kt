@@ -18,6 +18,13 @@ import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
 
 @Composable
+fun TimerScreenAppBar() {
+    TopAppBar(title = {
+        Text(stringResource(R.string.timer))
+    })
+}
+
+@Composable
 fun TimerScreen(
     navController: NavController,
 ) {
@@ -26,13 +33,7 @@ fun TimerScreen(
 
 @Composable
 private fun ScreenContent() {
-    Scaffold(
-        topBar = {
-            TopAppBar(title = {
-                Text(stringResource(R.string.timer))
-            })
-        },
-    ) {
+    Scaffold {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center

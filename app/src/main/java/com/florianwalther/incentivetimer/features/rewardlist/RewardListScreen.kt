@@ -10,7 +10,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,13 +28,23 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.florianwalther.incentivetimer.R
-import com.florianwalther.incentivetimer.application.FullScreenDestinations
-import com.florianwalther.incentivetimer.data.Reward
 import com.florianwalther.incentivetimer.core.ui.IconKey
 import com.florianwalther.incentivetimer.core.ui.ListBottomPadding
+import com.florianwalther.incentivetimer.core.ui.screenspecs.AddEditRewardScreenSpec
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
-import com.florianwalther.incentivetimer.features.addeditreward.*
+import com.florianwalther.incentivetimer.data.Reward
+import com.florianwalther.incentivetimer.features.addeditreward.ADD_EDIT_REWARD_RESULT
+import com.florianwalther.incentivetimer.features.addeditreward.RESULT_REWARD_ADDED
+import com.florianwalther.incentivetimer.features.addeditreward.RESULT_REWARD_DELETE
+import com.florianwalther.incentivetimer.features.addeditreward.RESULT_REWARD_UPDATED
 import kotlinx.coroutines.launch
+
+@Composable
+fun RewardListScreenAppBar() {
+    TopAppBar(title = {
+        Text(stringResource(R.string.reward_list))
+    })
+}
 
 @Composable
 fun RewardListScreen(
@@ -69,10 +80,10 @@ fun RewardListScreen(
     ScreenContent(
         rewards = rewards,
         onAddNewRewardClicked = {
-            navController.navigate(FullScreenDestinations.AddEditRewardScreen.route)
+            navController.navigate(AddEditRewardScreenSpec.buildRoute())
         },
         onRewardItemClicked = { id ->
-            navController.navigate(FullScreenDestinations.AddEditRewardScreen.route + "?$ARG_REWARD_ID=$id")
+            navController.navigate(AddEditRewardScreenSpec.buildRoute(id))
         },
         scaffoldState = scaffoldState
     )
@@ -86,11 +97,6 @@ private fun ScreenContent(
     scaffoldState: ScaffoldState = rememberScaffoldState(),
 ) {
     Scaffold(
-        topBar = {
-            TopAppBar(title = {
-                Text(stringResource(R.string.reward_list))
-            })
-        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddNewRewardClicked,

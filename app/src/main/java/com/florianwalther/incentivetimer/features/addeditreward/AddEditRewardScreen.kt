@@ -95,6 +95,52 @@ fun AddEditRewardScreen(
 }
 
 @Composable
+fun AddEditRewardScreenAppBar(
+    isEditMode: Boolean,
+    onCloseClicked: () -> Unit,
+    actions: AddEditRewardScreenActions
+) {
+    val appBarTitle =
+        stringResource(if (isEditMode) R.string.edit_reward else R.string.add_reward)
+    TopAppBar(
+        title = {
+            Text(appBarTitle)
+        },
+        navigationIcon = {
+            IconButton(onClick = onCloseClicked) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = stringResource(R.string.close)
+                )
+            }
+        },
+        actions = {
+            if (isEditMode) {
+                var expanded by remember { mutableStateOf(false) }
+                Box {
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(
+                            Icons.Default.MoreVert,
+                            contentDescription = stringResource(R.string.open_menu)
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }) {
+                        DropdownMenuItem(onClick = {
+                            expanded = false
+                            actions.onDeleteRewardClicked()
+                        }) {
+                            Text(stringResource(R.string.delete_reward))
+                        }
+                    }
+                }
+            }
+        }
+    )
+}
+
+@Composable
 private fun ScreenContent(
     isEditMode: Boolean,
     rewardNameInput: String,
@@ -104,49 +150,8 @@ private fun ScreenContent(
     showRewardIconSelectionDialog: Boolean,
     showDeleteRewardConfirmationDialog: Boolean,
     actions: AddEditRewardScreenActions,
-    onCloseClicked: () -> Unit,
 ) {
     Scaffold(
-        topBar = {
-            val appBarTitle =
-                stringResource(if (isEditMode) R.string.edit_reward else R.string.add_reward)
-            TopAppBar(
-                title = {
-                    Text(appBarTitle)
-                },
-                navigationIcon = {
-                    IconButton(onClick = onCloseClicked) {
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = stringResource(R.string.close)
-                        )
-                    }
-                },
-                actions = {
-                    if (isEditMode) {
-                        var expanded by remember { mutableStateOf(false) }
-                        Box {
-                            IconButton(onClick = { expanded = true }) {
-                                Icon(
-                                    Icons.Default.MoreVert,
-                                    contentDescription = stringResource(R.string.open_menu)
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = expanded,
-                                onDismissRequest = { expanded = false }) {
-                                DropdownMenuItem(onClick = {
-                                    expanded = false
-                                    actions.onDeleteRewardClicked()
-                                }) {
-                                    Text(stringResource(R.string.delete_reward))
-                                }
-                            }
-                        }
-                    }
-                }
-            )
-        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = actions::onSaveClicked,

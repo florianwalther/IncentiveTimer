@@ -5,6 +5,8 @@ import com.florianwalther.incentivetimer.data.Reward
 import com.florianwalther.incentivetimer.data.RewardDao
 import com.florianwalther.incentivetimer.core.ui.IconKey
 import com.florianwalther.incentivetimer.core.ui.defaultRewardIconKey
+import com.florianwalther.incentivetimer.core.ui.screenspecs.AddEditRewardScreenSpec
+import com.florianwalther.incentivetimer.core.ui.screenspecs.NO_REWARD_ID
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -17,14 +19,10 @@ class AddEditRewardViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
 ) : ViewModel(), AddEditRewardScreenActions {
 
-    private companion object {
-        const val KEY_REWARD_LIVE_DATA = "KEY_REWARD_LIVE_DATA"
-    }
-
-    private val rewardId = savedStateHandle.get<Long>(ARG_REWARD_ID)
+    private val rewardId = AddEditRewardScreenSpec.getRewardIdFromSavedStateHandle(savedStateHandle)
     private val rewardLiveData = savedStateHandle.getLiveData<Reward>(KEY_REWARD_LIVE_DATA)
 
-    val isEditMode = rewardId != NO_REWARD_ID
+    val isEditMode = AddEditRewardScreenSpec.isEditMode(rewardId)
 
     val rewardNameInput = rewardLiveData.map {
         it.name
@@ -139,8 +137,7 @@ class AddEditRewardViewModel @Inject constructor(
     }
 }
 
-const val ARG_REWARD_ID = "rewardId"
-const val NO_REWARD_ID = -1L
+private const val KEY_REWARD_LIVE_DATA = "KEY_REWARD_LIVE_DATA"
 
 const val ADD_EDIT_REWARD_RESULT = "ADD_EDIT_REWARD_RESULT"
 const val RESULT_REWARD_ADDED = "RESULT_REWARD_ADDED"
