@@ -21,4 +21,14 @@
     <string name="confirm_reward_deletion_text">Do you really want to delete this reward? This can not be undone!</string>
     <string name="delete">Delete</string>
     <string name="reward_deleted">Reward deleted</string>
+    <string name="start_timer">Start timer</string>
+    <string name="stop_timer">Stop timer</string>
+    <string name="rewards">Rewards</string>
+    <string name="reset_timer">Reset timer</string>
+    <string name="reset_pomodoro_set">Reset pomodoro set</string>
+    <string name="pomodoro">Pomodoro</string>
+    <string name="short_break">Short break</string>
+    <string name="long_break">Long break</string>
+    <string name="total">Total</string>
+    <string name="reset_pomodoro_count">Reset pomodoro count</string>
 </resources>

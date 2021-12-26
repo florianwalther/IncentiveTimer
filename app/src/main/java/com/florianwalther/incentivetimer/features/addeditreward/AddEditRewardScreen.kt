@@ -8,91 +8,19 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.core.ui.IconKey
 import com.florianwalther.incentivetimer.core.ui.composables.ITIconButton
 import com.florianwalther.incentivetimer.core.ui.defaultRewardIconKey
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
-import com.florianwalther.incentivetimer.core.util.exhaustive
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.flowlayout.MainAxisAlignment
-import kotlinx.coroutines.flow.collect
-
-interface AddEditRewardScreenActions {
-    fun onRewardNameInputChanged(input: String)
-    fun onChanceInPercentInputChanged(input: Int)
-    fun onRewardIconButtonClicked()
-    fun onRewardIconSelected(iconKey: IconKey)
-    fun onRewardIconDialogDismissed()
-    fun onSaveClicked()
-    fun onDeleteRewardClicked()
-    fun onDeleteRewardConfirmed()
-    fun onDeleteRewardDialogDismissed()
-}
-
-@Composable
-fun AddEditRewardScreen(
-    navController: NavController,
-) {
-    val viewModel: AddEditRewardViewModel = hiltViewModel()
-    val isEditMode = viewModel.isEditMode
-    val rewardNameInput by viewModel.rewardNameInput.observeAsState("")
-    val rewardNameInputIsError by viewModel.rewardNameInputIsError.observeAsState(false)
-    val chanceInPercentInput by viewModel.chanceInPercentInput.observeAsState(10)
-    val rewardIconKeySelection
-            by viewModel.rewardIconKeySelection.observeAsState(defaultRewardIconKey)
-    val showRewardIconSelectionDialog
-            by viewModel.showRewardIconSelectionDialog.observeAsState(false)
-    val showDeleteRewardConfirmationDialog
-            by viewModel.showDeleteRewardConfirmationDialog.observeAsState(false)
-
-
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
-            when (event) {
-                AddEditRewardViewModel.AddEditRewardEvent.RewardCreated -> {
-                    navController.previousBackStackEntry?.savedStateHandle?.set(
-                        ADD_EDIT_REWARD_RESULT, RESULT_REWARD_ADDED
-                    )
-                    navController.popBackStack()
-                }
-                AddEditRewardViewModel.AddEditRewardEvent.RewardUpdated -> {
-                    navController.previousBackStackEntry?.savedStateHandle?.set(
-                        ADD_EDIT_REWARD_RESULT, RESULT_REWARD_UPDATED
-                    )
-                    navController.popBackStack()
-                }
-                AddEditRewardViewModel.AddEditRewardEvent.RewardDeleted -> {
-                    navController.previousBackStackEntry?.savedStateHandle?.set(
-                        ADD_EDIT_REWARD_RESULT, RESULT_REWARD_DELETE
-                    )
-                    navController.popBackStack()
-                }
-            }.exhaustive
-        }
-    }
-
-    ScreenContent(
-        isEditMode = isEditMode,
-        rewardNameInput = rewardNameInput,
-        rewardNameInputIsError = rewardNameInputIsError,
-        chanceInPercentInput = chanceInPercentInput,
-        rewardIconKeySelection = rewardIconKeySelection,
-        showRewardIconSelectionDialog = showRewardIconSelectionDialog,
-        showDeleteRewardConfirmationDialog = showDeleteRewardConfirmationDialog,
-        actions = viewModel,
-        onCloseClicked = { navController.popBackStack() },
-    )
-}
 
 @Composable
 fun AddEditRewardScreenAppBar(
@@ -141,7 +69,7 @@ fun AddEditRewardScreenAppBar(
 }
 
 @Composable
-private fun ScreenContent(
+fun AddEditRewardScreenContent(
     isEditMode: Boolean,
     rewardNameInput: String,
     rewardNameInputIsError: Boolean,
@@ -293,12 +221,11 @@ private fun RewardIconSelectionDialog(
 private fun ScreenContentPreview() {
     IncentiveTimerTheme {
         Surface {
-            ScreenContent(
+            AddEditRewardScreenContent(
                 isEditMode = false,
                 rewardNameInput = "Example reward",
                 rewardNameInputIsError = false,
                 chanceInPercentInput = 10,
-                onCloseClicked = {},
                 showRewardIconSelectionDialog = false,
                 showDeleteRewardConfirmationDialog = false,
                 rewardIconKeySelection = defaultRewardIconKey,

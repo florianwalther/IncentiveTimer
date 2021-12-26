@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -25,7 +24,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.core.ui.IconKey
@@ -47,50 +45,7 @@ fun RewardListScreenAppBar() {
 }
 
 @Composable
-fun RewardListScreen(
-    navController: NavController,
-    viewModel: RewardListViewModel = hiltViewModel()
-) {
-    val rewards by viewModel.rewards.observeAsState(listOf())
-
-    val addEditRewardResult = navController.currentBackStackEntry
-        ?.savedStateHandle?.getLiveData<String>(ADD_EDIT_REWARD_RESULT)?.observeAsState()
-
-    val scaffoldState = rememberScaffoldState()
-
-    val context = LocalContext.current
-
-    LaunchedEffect(key1 = addEditRewardResult) {
-        navController.currentBackStackEntry?.savedStateHandle?.remove<String>(ADD_EDIT_REWARD_RESULT)
-        addEditRewardResult?.value?.let { addEditRewardResult ->
-            when (addEditRewardResult) {
-                RESULT_REWARD_ADDED -> {
-                    scaffoldState.snackbarHostState.showSnackbar(context.getString(R.string.reward_added))
-                }
-                RESULT_REWARD_UPDATED -> {
-                    scaffoldState.snackbarHostState.showSnackbar(context.getString(R.string.reward_updated))
-                }
-                RESULT_REWARD_DELETE -> {
-                    scaffoldState.snackbarHostState.showSnackbar(context.getString(R.string.reward_deleted))
-                }
-            }
-        }
-    }
-
-    ScreenContent(
-        rewards = rewards,
-        onAddNewRewardClicked = {
-            navController.navigate(AddEditRewardScreenSpec.buildRoute())
-        },
-        onRewardItemClicked = { id ->
-            navController.navigate(AddEditRewardScreenSpec.buildRoute(id))
-        },
-        scaffoldState = scaffoldState
-    )
-}
-
-@Composable
-private fun ScreenContent(
+fun RewardListScreenContent(
     rewards: List<Reward>,
     onRewardItemClicked: (Long) -> Unit,
     onAddNewRewardClicked: () -> Unit,
@@ -224,7 +179,7 @@ private fun RewardItemPreview() {
 private fun ScreenContentPreview() {
     IncentiveTimerTheme {
         Surface {
-            ScreenContent(
+            RewardListScreenContent(
                 listOf(
                     Reward(name = "CAKE", 5, iconKey = IconKey.CAKE),
                     Reward(name = "BATH_TUB", 20, iconKey = IconKey.BATH_TUB),

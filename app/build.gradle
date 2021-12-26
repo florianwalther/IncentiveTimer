@@ -74,6 +74,9 @@ dependencies {
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
 
+    // Compose UI Util
+    implementation "androidx.compose.ui:ui-util:$compose_version"
+
     // Compose Navigation
     implementation "androidx.navigation:navigation-compose:2.4.0-alpha10"
 
@@ -106,6 +109,8 @@ dependencies {
     // Logcat
     implementation 'com.squareup.logcat:logcat:0.1'
 
+    // Zhuinden flow-combinetuple
+    implementation 'com.github.Zhuinden:flow-combinetuple-kt:1.1.1'
 }
 
 kapt {

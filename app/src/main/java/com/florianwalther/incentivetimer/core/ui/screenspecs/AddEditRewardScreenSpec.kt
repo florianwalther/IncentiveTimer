@@ -1,6 +1,9 @@
 package com.florianwalther.incentivetimer.core.ui.screenspecs
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NamedNavArgument
@@ -8,9 +11,10 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.navArgument
 import com.florianwalther.incentivetimer.application.ARG_HIDE_BOTTOM_BAR
-import com.florianwalther.incentivetimer.features.addeditreward.AddEditRewardScreen
-import com.florianwalther.incentivetimer.features.addeditreward.AddEditRewardScreenAppBar
-import com.florianwalther.incentivetimer.features.addeditreward.AddEditRewardViewModel
+import com.florianwalther.incentivetimer.core.ui.defaultRewardIconKey
+import com.florianwalther.incentivetimer.core.util.exhaustive
+import com.florianwalther.incentivetimer.features.addeditreward.*
+import kotlinx.coroutines.flow.collect
 
 object AddEditRewardScreenSpec : ScreenSpec {
     override val navHostRoute: String = "add_edit_reward?$ARG_REWARD_ID={$ARG_REWARD_ID}"
@@ -37,7 +41,8 @@ object AddEditRewardScreenSpec : ScreenSpec {
         val viewModel: AddEditRewardViewModel = hiltViewModel(navBackStackEntry)
         val rewardId = navBackStackEntry.arguments?.getLong(ARG_REWARD_ID)
         AddEditRewardScreenAppBar(
-            isEditMode = isEditMode(rewardId), onCloseClicked = {
+            isEditMode = isEditMode(rewardId),
+            onCloseClicked = {
                 navController.popBackStack()
             },
             actions = viewModel
@@ -46,7 +51,54 @@ object AddEditRewardScreenSpec : ScreenSpec {
 
     @Composable
     override fun Content(navController: NavController, navBackStackEntry: NavBackStackEntry) {
-        AddEditRewardScreen(navController = navController)
+        val viewModel: AddEditRewardViewModel = hiltViewModel()
+        val isEditMode = viewModel.isEditMode
+        val rewardNameInput by viewModel.rewardNameInput.observeAsState("")
+        val rewardNameInputIsError by viewModel.rewardNameInputIsError.observeAsState(false)
+        val chanceInPercentInput by viewModel.chanceInPercentInput.observeAsState(10)
+        val rewardIconKeySelection
+                by viewModel.rewardIconKeySelection.observeAsState(defaultRewardIconKey)
+        val showRewardIconSelectionDialog
+                by viewModel.showRewardIconSelectionDialog.observeAsState(false)
+        val showDeleteRewardConfirmationDialog
+                by viewModel.showDeleteRewardConfirmationDialog.observeAsState(false)
+
+
+        LaunchedEffect(Unit) {
+            viewModel.events.collect { event ->
+                when (event) {
+                    AddEditRewardViewModel.AddEditRewardEvent.RewardCreated -> {
+                        navController.previousBackStackEntry?.savedStateHandle?.set(
+                            ADD_EDIT_REWARD_RESULT, RESULT_REWARD_ADDED
+                        )
+                        navController.popBackStack()
+                    }
+                    AddEditRewardViewModel.AddEditRewardEvent.RewardUpdated -> {
+                        navController.previousBackStackEntry?.savedStateHandle?.set(
+                            ADD_EDIT_REWARD_RESULT, RESULT_REWARD_UPDATED
+                        )
+                        navController.popBackStack()
+                    }
+                    AddEditRewardViewModel.AddEditRewardEvent.RewardDeleted -> {
+                        navController.previousBackStackEntry?.savedStateHandle?.set(
+                            ADD_EDIT_REWARD_RESULT, RESULT_REWARD_DELETE
+                        )
+                        navController.popBackStack()
+                    }
+                }.exhaustive
+            }
+        }
+
+        AddEditRewardScreenContent(
+            isEditMode = isEditMode,
+            rewardNameInput = rewardNameInput,
+            rewardNameInputIsError = rewardNameInputIsError,
+            chanceInPercentInput = chanceInPercentInput,
+            rewardIconKeySelection = rewardIconKeySelection,
+            showRewardIconSelectionDialog = showRewardIconSelectionDialog,
+            showDeleteRewardConfirmationDialog = showDeleteRewardConfirmationDialog,
+            actions = viewModel,
+        )
     }
 }
 
