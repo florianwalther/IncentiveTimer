@@ -31,10 +31,19 @@ object TimerScreenSpec : ScreenSpec {
     override fun Content(navController: NavController, navBackStackEntry: NavBackStackEntry) {
         val viewModel: TimerViewModel = hiltViewModel(navBackStackEntry)
         val pomodoroTimerState by viewModel.pomodoroTimerState.observeAsState()
+        val showResetTimerConfirmationDialog
+        by viewModel.showResetTimerConfirmationDialog.observeAsState(false)
+        val showResetPomodoroSetConfirmationDialog
+        by viewModel.showResetPomodoroSetConfirmationDialog.observeAsState(false)
+        val showResetPomodoroCountConfirmationDialog
+        by viewModel.showResetPomodoroCountConfirmationDialog.observeAsState(false )
 
         TimerScreenContent(
             pomodoroTimerState = pomodoroTimerState,
             actions = viewModel,
+            showResetTimerConfirmationDialog = showResetTimerConfirmationDialog,
+            showResetPomodoroSetConfirmationDialog = showResetPomodoroSetConfirmationDialog,
+            showResetPomodoroCountConfirmationDialog = showResetPomodoroCountConfirmationDialog,
         )
     }
 }

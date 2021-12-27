@@ -68,10 +68,8 @@ class PomodoroTimerManager @Inject constructor(
         val timerRunning = timerRunningFlow.value
         if (timerRunning) {
             stopTimer()
-            timerServiceManager.stopTimerService()
         } else {
             startTimer()
-            timerServiceManager.startTimerService()
         }
     }
 
@@ -87,7 +85,6 @@ class PomodoroTimerManager @Inject constructor(
             override fun onFinish() {
                 val currentPhase = currentPhaseFlow.value
                 notificationHelper.showTimerCompletedNotification(currentPhase)
-                stopTimer()
                 if (currentPhase == PomodoroPhase.POMODORO) {
                     pomodorosCompletedTotalFlow.value++
                     pomodorosCompletedInSetFlow.value++
@@ -96,11 +93,13 @@ class PomodoroTimerManager @Inject constructor(
             }
 
         }.start()
+        timerServiceManager.startTimerService()
         timerRunningFlow.value = true
     }
 
     private fun stopTimer() {
         countDownTimer?.cancel()
+        timerServiceManager.stopTimerService()
         timerRunningFlow.value = false
     }
 

@@ -39,4 +39,8 @@
     <string name="timer_service_channel_description">Shows a persistent notification when the pomodoro timer is running</string>
     <string name="timer_completed_channel_name">Timer completed notification</string>
     <string name="timer_completed_channel_description">Shows a notification when the countdown timer finishes</string>
+    <string name="reset_timer_confirmation_message">Do you really want to reset the timer?</string>
+    <string name="reset_pomodoro_set_confirmation_message">Do you really want to reset the whole pomodoro set?</string>
+    <string name="reset_pomodoro_count_confirmation_message">Do you really want to reset your completed pomodoros to 0?</string>
+    <string name="confirm">Confirm</string>
 </resources>
