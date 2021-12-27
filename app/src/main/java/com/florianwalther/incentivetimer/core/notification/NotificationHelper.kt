@@ -1,14 +1,15 @@
 package com.florianwalther.incentivetimer.core.notification
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.TaskStackBuilder
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.net.toUri
 import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.application.ITActivity
 import com.florianwalther.incentivetimer.features.timer.PomodoroPhase
@@ -23,16 +24,20 @@ class NotificationHelper @Inject constructor(
 ) {
     private val notificationManager = NotificationManagerCompat.from(applicationContext)
 
-    private val mutabilityFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+    private val pendingIntentFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
     } else {
         PendingIntent.FLAG_UPDATE_CURRENT
     }
 
-    // TODO: 26/12/2021 Let intent navigate to timer screen
-    private val openActivityIntent = Intent(applicationContext, ITActivity::class.java)
-    private val openActivityPendingIntent = PendingIntent.getActivity(
-        applicationContext, 0, openActivityIntent, mutabilityFlag
+    private val openTimerIntent = Intent(
+        Intent.ACTION_VIEW,
+        "https://www.incentivetimer.com/timer".toUri(),
+        applicationContext,
+        ITActivity::class.java
+    )
+    private val openTimerPendingIntent = PendingIntent.getActivity(
+        applicationContext, 0, openTimerIntent, pendingIntentFlags
     )
 
     init {
@@ -42,7 +47,7 @@ class NotificationHelper @Inject constructor(
     fun getBaseTimerServiceNotification() =
         NotificationCompat.Builder(applicationContext, TIMER_SERVICE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_timer)
-            .setContentIntent(openActivityPendingIntent)
+            .setContentIntent(openTimerPendingIntent)
             .setSilent(true)
             .setOnlyAlertOnce(true)
 
@@ -74,7 +79,7 @@ class NotificationHelper @Inject constructor(
                 .setContentTitle(applicationContext.getString(title))
                 .setContentText(applicationContext.getString(text))
                 .setSmallIcon(R.drawable.ic_timer)
-                .setContentIntent(openActivityPendingIntent)
+                .setContentIntent(openTimerPendingIntent)
                 .build()
         notificationManager.notify(TIMER_COMPLETED_NOTIFICATION_ID, timerCompletedNotification)
     }

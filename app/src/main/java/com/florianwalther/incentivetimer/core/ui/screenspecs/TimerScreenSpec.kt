@@ -6,12 +6,20 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
+import androidx.navigation.NavDeepLink
+import androidx.navigation.navDeepLink
 import com.florianwalther.incentivetimer.features.timer.TimerScreenContent
 import com.florianwalther.incentivetimer.features.timer.TimerScreenAppBar
 import com.florianwalther.incentivetimer.features.timer.TimerViewModel
 
 object TimerScreenSpec : ScreenSpec {
     override val navHostRoute: String = "timer"
+
+    override val deepLinks: List<NavDeepLink> = listOf(
+        navDeepLink {
+            uriPattern = "https://www.incentivetimer.com/timer"
+        }
+    )
 
     @Composable
     override fun TopBar(navController: NavController, navBackStackEntry: NavBackStackEntry) {
