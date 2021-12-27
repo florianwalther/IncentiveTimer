@@ -1,6 +1,9 @@
 package com.florianwalther.incentivetimer.features.timer
 
 import android.os.CountDownTimer
+import androidx.annotation.StringRes
+import com.florianwalther.incentivetimer.R
+import com.florianwalther.incentivetimer.core.notification.NotificationHelper
 import com.zhuinden.flowcombinetuplekt.combineTuple
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
@@ -16,8 +19,8 @@ data class PomodoroTimerState(
     val pomodorosCompletedTotal: Int,
 )
 
-enum class PomodoroPhase {
-    POMODORO, SHORT_BREAK, LONG_BREAK
+enum class PomodoroPhase(@StringRes val readableName: Int) {
+    POMODORO(R.string.pomodoro), SHORT_BREAK(R.string.short_break), LONG_BREAK(R.string.long_break)
 }
 
 const val POMODORO_DURATION_IN_MILLIS = /*25 * 60 * 1_000L*/ 12000L
@@ -26,7 +29,10 @@ const val LONG_BREAK_DURATION_IN_MILLIS = /*15 * 60 * 1_000L*/ 8000L
 const val POMODOROS_PER_SET = 4
 
 @Singleton
-class PomodoroTimerManager @Inject constructor() {
+class PomodoroTimerManager @Inject constructor(
+    private val timerServiceManager: TimerServiceManager,
+    private val notificationHelper: NotificationHelper,
+) {
     private val timerRunningFlow = MutableStateFlow(false)
     private val currentPhaseFlow = MutableStateFlow(PomodoroPhase.POMODORO)
     private val timeLeftInMillisFlow = MutableStateFlow(POMODORO_DURATION_IN_MILLIS)
@@ -58,11 +64,14 @@ class PomodoroTimerManager @Inject constructor() {
     private var countDownTimer: CountDownTimer? = null
 
     fun startStopTimer() {
+        notificationHelper.removeTimerCompletedNotification()
         val timerRunning = timerRunningFlow.value
         if (timerRunning) {
             stopTimer()
+            timerServiceManager.stopTimerService()
         } else {
             startTimer()
+            timerServiceManager.startTimerService()
         }
     }
 
@@ -76,8 +85,10 @@ class PomodoroTimerManager @Inject constructor() {
             }
 
             override fun onFinish() {
+                val currentPhase = currentPhaseFlow.value
+                notificationHelper.showTimerCompletedNotification(currentPhase)
                 stopTimer()
-                if (currentPhaseFlow.value == PomodoroPhase.POMODORO) {
+                if (currentPhase == PomodoroPhase.POMODORO) {
                     pomodorosCompletedTotalFlow.value++
                     pomodorosCompletedInSetFlow.value++
                 }

@@ -122,12 +122,8 @@ private fun Timer(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxSize()
         ) {
-            val phaseText = when (currentPhase) {
-                PomodoroPhase.POMODORO -> stringResource(R.string.pomodoro).uppercase()
-                PomodoroPhase.SHORT_BREAK -> stringResource(R.string.short_break).uppercase()
-                PomodoroPhase.LONG_BREAK -> stringResource(R.string.long_break).uppercase()
-                null -> ""
-            }
+            val phaseText =
+                if (currentPhase != null) stringResource(currentPhase.readableName) else ""
             Text(phaseText, Modifier.padding(top = 48.dp), style = MaterialTheme.typography.body2)
             Spacer(modifier = Modifier.height(4.dp))
             val timerRunning = pomodoroTimerState?.timerRunning ?: false
@@ -135,7 +131,7 @@ private fun Timer(
                 pomodorosCompletedInSet = pomodorosCompletedInSet,
                 pomodorosPerSetTarget = pomodorosPerSetTarget,
                 timerRunning = timerRunning,
-                currentPhase =currentPhase,
+                currentPhase = currentPhase,
             )
         }
         Text(
