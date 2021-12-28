@@ -23,4 +23,7 @@ interface RewardDao {
 
     @Delete
     suspend fun deleteReward(reward: Reward)
+
+    @Query("DELETE FROM rewards WHERE isUnlocked = 1")
+    suspend fun deleteAllUnlockedRewards()
 }

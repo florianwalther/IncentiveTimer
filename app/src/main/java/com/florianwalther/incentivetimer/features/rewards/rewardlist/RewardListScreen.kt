@@ -13,8 +13,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,22 +26,50 @@ import androidx.compose.ui.unit.dp
 import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.core.ui.IconKey
 import com.florianwalther.incentivetimer.core.ui.ListBottomPadding
+import com.florianwalther.incentivetimer.core.ui.composables.SimpleConfirmationDialog
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
 import com.florianwalther.incentivetimer.data.Reward
 import kotlinx.coroutines.launch
 
 @Composable
-fun RewardListScreenAppBar() {
-    TopAppBar(title = {
-        Text(stringResource(R.string.reward_list))
-    })
+fun RewardListScreenAppBar(
+    actions: RewardListActions,
+) {
+    TopAppBar(
+        title = {
+            Text(stringResource(R.string.reward_list))
+        },
+        actions = {
+            var expanded by remember { mutableStateOf(false) }
+            Box {
+                IconButton(onClick = { expanded = true }) {
+                    Icon(
+                        Icons.Default.MoreVert,
+                        contentDescription = stringResource(R.string.open_menu)
+                    )
+                }
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }) {
+                    DropdownMenuItem(onClick = {
+                        expanded = false
+                        actions.onDeleteAllUnlockedRewardsClicked()
+                    }) {
+                        Text(stringResource(R.string.delete_all_unlocked_rewards))
+                    }
+                }
+            }
+        }
+    )
 }
 
 @Composable
 fun RewardListScreenContent(
     rewards: List<Reward>,
+    showDeleteAllUnlockedRewardsDialog: Boolean,
     onRewardItemClicked: (Long) -> Unit,
     onAddNewRewardClicked: () -> Unit,
+    actions: RewardListActions,
     scaffoldState: ScaffoldState = rememberScaffoldState(),
 ) {
     Scaffold(
@@ -72,10 +100,14 @@ fun RewardListScreenContent(
                 state = listState,
                 modifier = Modifier.fillMaxSize()
             ) {
-                items(rewards) { reward ->
-                    RewardItem(reward, onItemClicked = { id ->
-                        onRewardItemClicked(id)
-                    })
+                items(rewards, key = { it.id }) { reward ->
+                    RewardItem(
+                        reward = reward,
+                        onItemClicked = { id ->
+                            onRewardItemClicked(id)
+                        },
+                        modifier = Modifier.animateItemPlacement()
+                    )
                 }
             }
             AnimatedVisibility(
@@ -101,6 +133,15 @@ fun RewardListScreenContent(
                 }
             }
         }
+    }
+
+    if (showDeleteAllUnlockedRewardsDialog) {
+        SimpleConfirmationDialog(
+            title = R.string.delete_all_unlocked_rewards,
+            text = R.string.delete_all_unlocked_rewards_confirmation_text,
+            dismissAction = actions::onDeleteAllUnlockedRewardsDialogDismissed,
+            confirmAction = actions::onDeleteAllUnlockedRewardsConfirmed
+        )
     }
 }
 
@@ -165,7 +206,9 @@ private fun RewardItem(
 private fun RewardItemPreview() {
     IncentiveTimerTheme {
         Surface {
-            RewardItem(Reward("Title mmmmmmmmmmmmmmmmmmmmm", 5, IconKey.BATH_TUB), onItemClicked = {})
+            RewardItem(
+                Reward("Title mmmmmmmmmmmmmmmmmmmmm", 5, IconKey.BATH_TUB),
+                onItemClicked = {})
         }
     }
 }
@@ -184,7 +227,13 @@ private fun RewardItemPreview() {
 private fun RewardItemUnlockedPreview() {
     IncentiveTimerTheme {
         Surface {
-            RewardItem(Reward("Title mmmmmmmmmmmmmmmmmmmmmmmmmmmm", 5, IconKey.BATH_TUB, isUnlocked = true), onItemClicked = {})
+            RewardItem(
+                Reward(
+                    "Title mmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+                    5,
+                    IconKey.BATH_TUB,
+                    isUnlocked = true
+                ), onItemClicked = {})
         }
     }
 }
@@ -211,6 +260,12 @@ private fun ScreenContentPreview() {
                 ),
                 onAddNewRewardClicked = {},
                 onRewardItemClicked = {},
+                showDeleteAllUnlockedRewardsDialog = false,
+                actions = object : RewardListActions {
+                    override fun onDeleteAllUnlockedRewardsClicked() {}
+                    override fun onDeleteAllUnlockedRewardsConfirmed() {}
+                    override fun onDeleteAllUnlockedRewardsDialogDismissed() {}
+                }
             )
         }
     }

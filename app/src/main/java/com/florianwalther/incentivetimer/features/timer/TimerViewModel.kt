@@ -45,6 +45,7 @@ class TimerViewModel @Inject constructor(
     }
 
     override fun onResetTimerConfirmed() {
+        showResetTimerConfirmationDialogLiveData.value = false
         pomodoroTimerManager.resetTimer()
     }
 
@@ -57,6 +58,7 @@ class TimerViewModel @Inject constructor(
     }
 
     override fun onResetPomodoroSetConfirmed() {
+        showResetPomodoroSetConfirmationDialogLiveData.value = false
         pomodoroTimerManager.resetPomodoroSet()
     }
 
@@ -69,6 +71,7 @@ class TimerViewModel @Inject constructor(
     }
 
     override fun onResetPomodoroCountConfirmed() {
+        showResetPomodoroCountConfirmationDialogLiveData.value = false
         pomodoroTimerManager.resetPomodoroCount()
     }
 

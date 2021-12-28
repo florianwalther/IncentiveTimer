@@ -45,4 +45,6 @@
     <string name="confirm">Confirm</string>
     <string name="reward_unlocked">Reward unlocked</string>
     <string name="unlocked">Unlocked</string>
+    <string name="delete_all_unlocked_rewards">Delete all unlocked rewards</string>
+    <string name="delete_all_unlocked_rewards_confirmation_text">Do you really want to delete all unlocked rewards?</string>
 </resources>

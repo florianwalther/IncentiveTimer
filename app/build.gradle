@@ -40,8 +40,8 @@ android {
         compose true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion compose_version
-        kotlinCompilerVersion '1.5.31'
+        kotlinCompilerExtensionVersion '1.1.0-rc02'
+        kotlinCompilerVersion '1.6.10'
     }
     packagingOptions {
         resources {
@@ -55,6 +55,7 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
         freeCompilerArgs += ["-Xuse-experimental=androidx.compose.material.ExperimentalMaterialApi"]
         freeCompilerArgs += ["-Xuse-experimental=androidx.compose.animation.ExperimentalAnimationApi"]
         freeCompilerArgs += ["-Xuse-experimental=androidx.compose.ui.ExperimentalComposeUiApi"]
+        freeCompilerArgs += ["-Xuse-experimental=androidx.compose.foundation.ExperimentalFoundationApi"]
     }
 }
 
