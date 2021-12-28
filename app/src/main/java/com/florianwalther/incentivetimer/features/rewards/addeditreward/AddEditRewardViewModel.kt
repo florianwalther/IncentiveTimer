@@ -21,11 +21,7 @@ class AddEditRewardViewModel @Inject constructor(
     private val rewardId = AddEditRewardScreenSpec.getRewardIdFromSavedStateHandle(savedStateHandle)
     private val rewardLiveData = savedStateHandle.getLiveData<Reward>(
         KEY_REWARD_LIVE_DATA,
-        Reward(
-           name = "",
-            chanceInPercent = 10,
-            iconKey = defaultRewardIconKey
-        )
+        Reward.DEFAULT
     )
     val rewardInput: LiveData<Reward> = rewardLiveData
 

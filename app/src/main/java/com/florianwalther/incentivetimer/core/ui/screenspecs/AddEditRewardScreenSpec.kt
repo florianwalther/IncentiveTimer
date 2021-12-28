@@ -55,7 +55,7 @@ object AddEditRewardScreenSpec : ScreenSpec {
         val viewModel: AddEditRewardViewModel = hiltViewModel()
         val isEditMode = viewModel.isEditMode
 
-        val rewardInput by viewModel.rewardInput.observeAsState(viewModel.rewardInput.value!!)
+        val rewardInput by viewModel.rewardInput.observeAsState(Reward.DEFAULT)
         val unlockedStateCheckboxVisible by viewModel.unlockedStateCheckboxVisible.observeAsState(false)
         val rewardNameInputIsError by viewModel.rewardNameInputIsError.observeAsState(false)
         val showRewardIconSelectionDialog

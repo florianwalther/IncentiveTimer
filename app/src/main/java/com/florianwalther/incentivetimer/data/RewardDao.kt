@@ -6,8 +6,8 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface RewardDao {
 
-    @Query("SELECT * FROM rewards")
-    fun getAllRewards(): Flow<List<Reward>>
+    @Query("SELECT * FROM rewards ORDER BY isUnlocked DESC")
+    fun getAllRewardsSortedByIsUnlockedDesc(): Flow<List<Reward>>
 
     @Query("SELECT * FROM rewards WHERE isUnlocked = 0")
     fun getAllNotUnlockedRewards(): Flow<List<Reward>>

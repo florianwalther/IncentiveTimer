@@ -47,4 +47,6 @@
     <string name="unlocked">Unlocked</string>
     <string name="delete_all_unlocked_rewards">Delete all unlocked rewards</string>
     <string name="delete_all_unlocked_rewards_confirmation_text">Do you really want to delete all unlocked rewards?</string>
+    <string name="skip_break">Skip break</string>
+    <string name="skip_break_confirmation_message">Do you want to skip this break?</string>
 </resources>

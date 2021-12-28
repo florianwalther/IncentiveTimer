@@ -12,7 +12,7 @@ class RewardListViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
 ) : ViewModel(), RewardListActions {
 
-    val rewards = rewardDao.getAllRewards().asLiveData()
+    val rewards = rewardDao.getAllRewardsSortedByIsUnlockedDesc().asLiveData()
 
     private val showDeleteAllUnlockedRewardsDialogLiveData =
         savedStateHandle.getLiveData<Boolean>("showDeleteAllUnlockedRewardsDialogLiveData", false)
