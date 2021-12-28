@@ -11,8 +11,8 @@ import com.florianwalther.incentivetimer.R
 
 @Composable
 fun SimpleConfirmationDialog(
-    @StringRes text: Int,
     @StringRes title: Int,
+    @StringRes text: Int,
     dismissAction: () -> Unit,
     confirmAction: () -> Unit,
     @StringRes confirmButtonText: Int = R.string.confirm,

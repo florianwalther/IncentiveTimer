@@ -1,4 +1,4 @@
-package com.florianwalther.incentivetimer.features.addeditreward
+package com.florianwalther.incentivetimer.features.rewards.addeditreward
 
 import androidx.lifecycle.*
 import com.florianwalther.incentivetimer.data.Reward
@@ -6,10 +6,9 @@ import com.florianwalther.incentivetimer.data.RewardDao
 import com.florianwalther.incentivetimer.core.ui.IconKey
 import com.florianwalther.incentivetimer.core.ui.defaultRewardIconKey
 import com.florianwalther.incentivetimer.core.ui.screenspecs.AddEditRewardScreenSpec
-import com.florianwalther.incentivetimer.core.ui.screenspecs.NO_REWARD_ID
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,21 +19,21 @@ class AddEditRewardViewModel @Inject constructor(
 ) : ViewModel(), AddEditRewardScreenActions {
 
     private val rewardId = AddEditRewardScreenSpec.getRewardIdFromSavedStateHandle(savedStateHandle)
-    private val rewardLiveData = savedStateHandle.getLiveData<Reward>(KEY_REWARD_LIVE_DATA)
+    private val rewardLiveData = savedStateHandle.getLiveData<Reward>(
+        KEY_REWARD_LIVE_DATA,
+        Reward(
+           name = "",
+            chanceInPercent = 10,
+            iconKey = defaultRewardIconKey
+        )
+    )
+    val rewardInput: LiveData<Reward> = rewardLiveData
 
     val isEditMode = AddEditRewardScreenSpec.isEditMode(rewardId)
 
-    val rewardNameInput = rewardLiveData.map {
-        it.name
-    }
-
-    val chanceInPercentInput = rewardLiveData.map {
-        it.chanceInPercent
-    }
-
-    val rewardIconKeySelection = rewardLiveData.map {
-        it.iconKey
-    }
+    private val unlockedStateCheckboxVisibleLiveData =
+        savedStateHandle.getLiveData<Boolean>("unlockedStateCheckboxVisibleLiveData", false)
+    val unlockedStateCheckboxVisible: LiveData<Boolean> = unlockedStateCheckboxVisibleLiveData
 
     private val rewardNameInputIsErrorLiveData =
         savedStateHandle.getLiveData<Boolean>("rewardNameInputIsError", false)
@@ -56,10 +55,24 @@ class AddEditRewardViewModel @Inject constructor(
         if (!savedStateHandle.contains("rewardLiveData")) {
             if (rewardId != null && isEditMode) {
                 viewModelScope.launch {
-                    rewardLiveData.value = rewardDao.getRewardById(rewardId)
+                    rewardLiveData.value = rewardDao.getRewardById(rewardId).firstOrNull()
                 }
             } else {
                 rewardLiveData.value = Reward("", 10, defaultRewardIconKey)
+            }
+        }
+        if (rewardId != null) {
+            viewModelScope.launch {
+                rewardDao.getRewardById(rewardId)
+                    .distinctUntilChangedBy { it?.isUnlocked }
+                    .filter { it?.isUnlocked == true }
+                    .collectLatest { reward ->
+                        if (reward != null) {
+                            unlockedStateCheckboxVisibleLiveData.value = reward.isUnlocked
+                            rewardLiveData.value =
+                                rewardLiveData.value?.copy(isUnlocked = reward.isUnlocked)
+                        }
+                    }
             }
         }
     }
@@ -115,6 +128,10 @@ class AddEditRewardViewModel @Inject constructor(
     private suspend fun createReward(reward: Reward) {
         rewardDao.insertReward(reward)
         eventChannel.send(AddEditRewardEvent.RewardCreated)
+    }
+
+    override fun onRewardUnlockedCheckedChanged(unlocked: Boolean) {
+        rewardLiveData.value = rewardLiveData.value?.copy(isUnlocked = unlocked)
     }
 
     override fun onDeleteRewardClicked() {

@@ -13,7 +13,8 @@ import androidx.navigation.navArgument
 import com.florianwalther.incentivetimer.application.ARG_HIDE_BOTTOM_BAR
 import com.florianwalther.incentivetimer.core.ui.defaultRewardIconKey
 import com.florianwalther.incentivetimer.core.util.exhaustive
-import com.florianwalther.incentivetimer.features.addeditreward.*
+import com.florianwalther.incentivetimer.data.Reward
+import com.florianwalther.incentivetimer.features.rewards.addeditreward.*
 import kotlinx.coroutines.flow.collect
 
 object AddEditRewardScreenSpec : ScreenSpec {
@@ -53,11 +54,10 @@ object AddEditRewardScreenSpec : ScreenSpec {
     override fun Content(navController: NavController, navBackStackEntry: NavBackStackEntry) {
         val viewModel: AddEditRewardViewModel = hiltViewModel()
         val isEditMode = viewModel.isEditMode
-        val rewardNameInput by viewModel.rewardNameInput.observeAsState("")
+
+        val rewardInput by viewModel.rewardInput.observeAsState(viewModel.rewardInput.value!!)
+        val unlockedStateCheckboxVisible by viewModel.unlockedStateCheckboxVisible.observeAsState(false)
         val rewardNameInputIsError by viewModel.rewardNameInputIsError.observeAsState(false)
-        val chanceInPercentInput by viewModel.chanceInPercentInput.observeAsState(10)
-        val rewardIconKeySelection
-                by viewModel.rewardIconKeySelection.observeAsState(defaultRewardIconKey)
         val showRewardIconSelectionDialog
                 by viewModel.showRewardIconSelectionDialog.observeAsState(false)
         val showDeleteRewardConfirmationDialog
@@ -91,10 +91,9 @@ object AddEditRewardScreenSpec : ScreenSpec {
 
         AddEditRewardScreenContent(
             isEditMode = isEditMode,
-            rewardNameInput = rewardNameInput,
+            rewardInput = rewardInput,
+            unlockedStateCheckboxVisible = unlockedStateCheckboxVisible,
             rewardNameInputIsError = rewardNameInputIsError,
-            chanceInPercentInput = chanceInPercentInput,
-            rewardIconKeySelection = rewardIconKeySelection,
             showRewardIconSelectionDialog = showRewardIconSelectionDialog,
             showDeleteRewardConfirmationDialog = showDeleteRewardConfirmationDialog,
             actions = viewModel,

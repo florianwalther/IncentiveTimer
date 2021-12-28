@@ -1,4 +1,4 @@
-package com.florianwalther.incentivetimer.features.addeditreward
+package com.florianwalther.incentivetimer.features.rewards.addeditreward
 
 import com.florianwalther.incentivetimer.core.ui.IconKey
 
@@ -9,6 +9,7 @@ interface AddEditRewardScreenActions {
     fun onRewardIconSelected(iconKey: IconKey)
     fun onRewardIconDialogDismissed()
     fun onSaveClicked()
+    fun onRewardUnlockedCheckedChanged(unlocked: Boolean)
     fun onDeleteRewardClicked()
     fun onDeleteRewardConfirmed()
     fun onDeleteRewardDialogDismissed()

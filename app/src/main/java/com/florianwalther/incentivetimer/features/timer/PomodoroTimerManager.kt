@@ -4,6 +4,7 @@ import android.os.CountDownTimer
 import androidx.annotation.StringRes
 import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.core.notification.NotificationHelper
+import com.florianwalther.incentivetimer.features.rewards.RewardUnlockManager
 import com.zhuinden.flowcombinetuplekt.combineTuple
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
@@ -32,6 +33,7 @@ const val POMODOROS_PER_SET = 4
 class PomodoroTimerManager @Inject constructor(
     private val timerServiceManager: TimerServiceManager,
     private val notificationHelper: NotificationHelper,
+    private val rewardUnlockManager: RewardUnlockManager,
 ) {
     private val timerRunningFlow = MutableStateFlow(false)
     private val currentPhaseFlow = MutableStateFlow(PomodoroPhase.POMODORO)
@@ -86,6 +88,7 @@ class PomodoroTimerManager @Inject constructor(
                 val currentPhase = currentPhaseFlow.value
                 notificationHelper.showTimerCompletedNotification(currentPhase)
                 if (currentPhase == PomodoroPhase.POMODORO) {
+                    rewardUnlockManager.rollAllRewards()
                     pomodorosCompletedTotalFlow.value++
                     pomodorosCompletedInSetFlow.value++
                 }

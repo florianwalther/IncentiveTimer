@@ -10,13 +10,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import com.florianwalther.incentivetimer.R
-import com.florianwalther.incentivetimer.features.addeditreward.ADD_EDIT_REWARD_RESULT
-import com.florianwalther.incentivetimer.features.addeditreward.RESULT_REWARD_ADDED
-import com.florianwalther.incentivetimer.features.addeditreward.RESULT_REWARD_DELETE
-import com.florianwalther.incentivetimer.features.addeditreward.RESULT_REWARD_UPDATED
-import com.florianwalther.incentivetimer.features.rewardlist.RewardListScreenAppBar
-import com.florianwalther.incentivetimer.features.rewardlist.RewardListScreenContent
-import com.florianwalther.incentivetimer.features.rewardlist.RewardListViewModel
+import com.florianwalther.incentivetimer.features.rewards.addeditreward.ADD_EDIT_REWARD_RESULT
+import com.florianwalther.incentivetimer.features.rewards.addeditreward.RESULT_REWARD_ADDED
+import com.florianwalther.incentivetimer.features.rewards.addeditreward.RESULT_REWARD_DELETE
+import com.florianwalther.incentivetimer.features.rewards.addeditreward.RESULT_REWARD_UPDATED
+import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListScreenAppBar
+import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListScreenContent
+import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListViewModel
 
 object RewardListScreenSpec : ScreenSpec {
     override val navHostRoute: String = "rewardList"

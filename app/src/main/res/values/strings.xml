@@ -43,4 +43,6 @@
     <string name="reset_pomodoro_set_confirmation_message">Do you really want to reset the whole pomodoro set?</string>
     <string name="reset_pomodoro_count_confirmation_message">Do you really want to reset your completed pomodoros to 0?</string>
     <string name="confirm">Confirm</string>
+    <string name="reward_unlocked">Reward unlocked</string>
+    <string name="unlocked">Unlocked</string>
 </resources>

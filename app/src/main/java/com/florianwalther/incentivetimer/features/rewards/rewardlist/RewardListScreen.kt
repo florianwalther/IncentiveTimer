@@ -1,4 +1,4 @@
-package com.florianwalther.incentivetimer.features.rewardlist
+package com.florianwalther.incentivetimer.features.rewards.rewardlist
 
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
@@ -11,30 +11,23 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.core.ui.IconKey
 import com.florianwalther.incentivetimer.core.ui.ListBottomPadding
-import com.florianwalther.incentivetimer.core.ui.screenspecs.AddEditRewardScreenSpec
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
 import com.florianwalther.incentivetimer.data.Reward
-import com.florianwalther.incentivetimer.features.addeditreward.ADD_EDIT_REWARD_RESULT
-import com.florianwalther.incentivetimer.features.addeditreward.RESULT_REWARD_ADDED
-import com.florianwalther.incentivetimer.features.addeditreward.RESULT_REWARD_DELETE
-import com.florianwalther.incentivetimer.features.addeditreward.RESULT_REWARD_UPDATED
 import kotlinx.coroutines.launch
 
 @Composable
@@ -130,16 +123,28 @@ private fun RewardItem(
                 modifier = Modifier
                     .padding(8.dp)
                     .size(64.dp)
-                    .fillMaxWidth()
             )
-            Column() {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
                     text = reward.name,
                     fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = stringResource(R.string.chance) + ": ${reward.chanceInPercent}%",
-                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            if (reward.isUnlocked) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = stringResource(R.string.reward_unlocked),
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colors.primary,
                 )
             }
         }
@@ -160,7 +165,26 @@ private fun RewardItem(
 private fun RewardItemPreview() {
     IncentiveTimerTheme {
         Surface {
-            RewardItem(Reward("Title", 5, IconKey.BATH_TUB), onItemClicked = {})
+            RewardItem(Reward("Title mmmmmmmmmmmmmmmmmmmmm", 5, IconKey.BATH_TUB), onItemClicked = {})
+        }
+    }
+}
+
+@Preview(
+    name = "Light mode",
+    uiMode = Configuration.UI_MODE_NIGHT_NO,
+    showBackground = true,
+)
+@Preview(
+    name = "Dark mode",
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    showBackground = true,
+)
+@Composable
+private fun RewardItemUnlockedPreview() {
+    IncentiveTimerTheme {
+        Surface {
+            RewardItem(Reward("Title mmmmmmmmmmmmmmmmmmmmmmmmmmmm", 5, IconKey.BATH_TUB, isUnlocked = true), onItemClicked = {})
         }
     }
 }

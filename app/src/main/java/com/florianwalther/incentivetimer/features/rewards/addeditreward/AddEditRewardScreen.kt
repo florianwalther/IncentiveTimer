@@ -1,4 +1,4 @@
-package com.florianwalther.incentivetimer.features.addeditreward
+package com.florianwalther.incentivetimer.features.rewards.addeditreward
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
@@ -17,8 +17,11 @@ import androidx.compose.ui.unit.dp
 import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.core.ui.IconKey
 import com.florianwalther.incentivetimer.core.ui.composables.ITIconButton
+import com.florianwalther.incentivetimer.core.ui.composables.LabeledCheckbox
+import com.florianwalther.incentivetimer.core.ui.composables.SimpleConfirmationDialog
 import com.florianwalther.incentivetimer.core.ui.defaultRewardIconKey
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
+import com.florianwalther.incentivetimer.data.Reward
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.flowlayout.MainAxisAlignment
 
@@ -71,10 +74,9 @@ fun AddEditRewardScreenAppBar(
 @Composable
 fun AddEditRewardScreenContent(
     isEditMode: Boolean,
-    rewardNameInput: String,
+    rewardInput: Reward,
+    unlockedStateCheckboxVisible: Boolean,
     rewardNameInputIsError: Boolean,
-    chanceInPercentInput: Int,
-    rewardIconKeySelection: IconKey,
     showRewardIconSelectionDialog: Boolean,
     showDeleteRewardConfirmationDialog: Boolean,
     actions: AddEditRewardScreenActions,
@@ -93,9 +95,9 @@ fun AddEditRewardScreenContent(
         },
     ) {
         Column(Modifier.padding(16.dp)) {
-            val focusRequester = remember { FocusRequester()}
+            val focusRequester = remember { FocusRequester() }
             TextField(
-                value = rewardNameInput,
+                value = rewardInput.name,
                 onValueChange = actions::onRewardNameInputChanged,
                 label = { Text(stringResource(R.string.reward_name)) },
                 singleLine = true,
@@ -117,9 +119,9 @@ fun AddEditRewardScreenContent(
                 )
             }
             Spacer(Modifier.height(16.dp))
-            Text(stringResource(R.string.chance) + ": $chanceInPercentInput%")
+            Text(stringResource(R.string.chance) + ": ${rewardInput.chanceInPercent}%")
             Slider(
-                value = chanceInPercentInput.toFloat() / 100,
+                value = rewardInput.chanceInPercent.toFloat() / 100,
                 onValueChange = { chanceAsFloat ->
                     actions.onChanceInPercentInputChanged((chanceAsFloat * 100).toInt())
                 }
@@ -130,11 +132,19 @@ fun AddEditRewardScreenContent(
                 modifier = Modifier.size(64.dp)
             ) {
                 Icon(
-                    imageVector = rewardIconKeySelection.rewardIcon,
+                    imageVector = rewardInput.iconKey.rewardIcon,
                     contentDescription = stringResource(R.string.select_icon),
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(8.dp)
+                )
+            }
+            if (unlockedStateCheckboxVisible) {
+                Spacer(Modifier.height(16.dp))
+                LabeledCheckbox(
+                    checked = rewardInput.isUnlocked,
+                    onCheckedChange = actions::onRewardUnlockedCheckedChanged,
+                    text = stringResource(R.string.unlocked)
                 )
             }
         }
@@ -148,24 +158,12 @@ fun AddEditRewardScreenContent(
     }
 
     if (showDeleteRewardConfirmationDialog) {
-        AlertDialog(
-            onDismissRequest = actions::onDeleteRewardDialogDismissed,
-            title = {
-                Text(stringResource(R.string.confirm_deletion))
-            },
-            text = {
-                Text(stringResource(R.string.confirm_reward_deletion_text))
-            },
-            confirmButton = {
-                TextButton(onClick = actions::onDeleteRewardConfirmed) {
-                    Text(stringResource(R.string.delete))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = actions::onDeleteRewardDialogDismissed) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
+        SimpleConfirmationDialog(
+            title = R.string.confirm_deletion,
+            text = R.string.confirm_reward_deletion_text,
+            dismissAction = actions::onDeleteRewardDialogDismissed,
+            confirmAction = actions::onDeleteRewardConfirmed,
+            confirmButtonText = R.string.delete
         )
     }
 }
@@ -223,12 +221,15 @@ private fun ScreenContentPreview() {
         Surface {
             AddEditRewardScreenContent(
                 isEditMode = false,
-                rewardNameInput = "Example reward",
+                rewardInput = Reward(
+                    name = "Example reward",
+                    chanceInPercent = 10,
+                    iconKey = defaultRewardIconKey,
+                ),
+                unlockedStateCheckboxVisible = true,
                 rewardNameInputIsError = false,
-                chanceInPercentInput = 10,
                 showRewardIconSelectionDialog = false,
                 showDeleteRewardConfirmationDialog = false,
-                rewardIconKeySelection = defaultRewardIconKey,
                 actions = object : AddEditRewardScreenActions {
                     override fun onRewardNameInputChanged(input: String) {}
                     override fun onChanceInPercentInputChanged(input: Int) {}
@@ -236,10 +237,11 @@ private fun ScreenContentPreview() {
                     override fun onRewardIconSelected(iconKey: IconKey) {}
                     override fun onRewardIconDialogDismissed() {}
                     override fun onSaveClicked() {}
+                    override fun onRewardUnlockedCheckedChanged(unlocked: Boolean) {}
                     override fun onDeleteRewardClicked() {}
                     override fun onDeleteRewardConfirmed() {}
                     override fun onDeleteRewardDialogDismissed() {}
-                }
+                },
             )
         }
     }
