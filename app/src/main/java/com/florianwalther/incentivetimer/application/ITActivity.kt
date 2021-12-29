@@ -38,7 +38,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 
 @AndroidEntryPoint
 class ITActivity : ComponentActivity() {
-    private val deepLinkChannel = Channel<Intent?>(UNLIMITED)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,90 +47,81 @@ class ITActivity : ComponentActivity() {
             }
         }
     }
+}
 
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        deepLinkChannel.trySend(intent)
-    }
+@Composable
+private fun ScreenContent() {
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
 
-    @Composable
-    private fun ScreenContent() {
-        val navController = rememberNavController()
-        val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentDestination = navBackStackEntry?.destination
+    val screenSpec = ScreenSpec.allScreens[currentDestination?.route]
 
-        val screenSpec = ScreenSpec.allScreens[currentDestination?.route]
-
-        LaunchedEffect(Unit) {
-            deepLinkChannel.receiveAsFlow().collect { intent ->
-                navController.handleDeepLink(intent)
+    Scaffold(
+        topBar = {
+            val navBackStackEntry = navBackStackEntry
+            if (navBackStackEntry != null) {
+                screenSpec?.TopBar(navController, navBackStackEntry)
             }
-        }
+        },
+        bottomBar = {
+            val hideBottomBar = navBackStackEntry?.arguments?.getBoolean(ARG_HIDE_BOTTOM_BAR)
 
-        Scaffold(
-            topBar = {
-                val navBackStackEntry = navBackStackEntry
-                if (navBackStackEntry != null) {
-                    screenSpec?.TopBar(navController, navBackStackEntry)
-                }
-            },
-            bottomBar = {
-                val hideBottomBar = navBackStackEntry?.arguments?.getBoolean(ARG_HIDE_BOTTOM_BAR)
-
-                if (hideBottomBar == null || !hideBottomBar) {
-                    BottomNavigation {
-                        bottomNavDestinations.forEach { bottomNavDestination ->
-                            BottomNavigationItem(
-                                icon = {
-                                    Icon(bottomNavDestination.icon, contentDescription = null)
-                                },
-                                label = {
-                                    Text(stringResource(bottomNavDestination.label))
-                                },
-                                alwaysShowLabel = false,
-                                selected = currentDestination?.hierarchy?.any { it.route == bottomNavDestination.screenSpec.navHostRoute } == true,
-                                onClick = {
-                                    navController.navigate(bottomNavDestination.screenSpec.navHostRoute) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
+            if (hideBottomBar == null || !hideBottomBar) {
+                BottomNavigation {
+                    bottomNavDestinations.forEach { bottomNavDestination ->
+                        BottomNavigationItem(
+                            icon = {
+                                Icon(bottomNavDestination.icon, contentDescription = null)
+                            },
+                            label = {
+                                Text(stringResource(bottomNavDestination.label))
+                            },
+                            alwaysShowLabel = false,
+                            selected = currentDestination?.hierarchy?.any { it.route == bottomNavDestination.screenSpec.navHostRoute } == true,
+                            onClick = {
+                                // TODO: 29/12/2021 Navigate to start destination not working after deep link -> library bug.
+                                //  Switch back to onNewIntent if bug doesn't get fixed
+                                navController.navigate(bottomNavDestination.screenSpec.navHostRoute) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
                                     }
-                                },
-                            )
-                        }
-                    }
-                }
-            }
-        ) { innerPadding ->
-            NavHost(
-                navController = navController,
-                startDestination = bottomNavDestinations[0].screenSpec.navHostRoute,
-                modifier = Modifier.padding(innerPadding),
-            ) {
-                ScreenSpec.allScreens.values.forEach { screen ->
-                    composable(
-                        route = screen.navHostRoute,
-                        arguments = screen.arguments,
-                        deepLinks = screen.deepLinks,
-                    ) { navBackStackEntry ->
-                        screen.Content(
-                            navController = navController,
-                            navBackStackEntry = navBackStackEntry
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
                         )
                     }
                 }
             }
         }
-    }
-
-    @Preview(showBackground = true)
-    @Composable
-    fun ScreenContentPreview() {
-        IncentiveTimerTheme {
-            ScreenContent()
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = bottomNavDestinations[0].screenSpec.navHostRoute,
+            modifier = Modifier.padding(innerPadding),
+        ) {
+            ScreenSpec.allScreens.values.forEach { screen ->
+                composable(
+                    route = screen.navHostRoute,
+                    arguments = screen.arguments,
+                    deepLinks = screen.deepLinks,
+                ) { navBackStackEntry ->
+                    screen.Content(
+                        navController = navController,
+                        navBackStackEntry = navBackStackEntry
+                    )
+                }
+            }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ScreenContentPreview() {
+    IncentiveTimerTheme {
+        ScreenContent()
     }
 }
 

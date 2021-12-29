@@ -113,9 +113,9 @@ class PomodoroTimerManager @Inject constructor(
         if (currentPhaseFlow.value.isBreak) {
             countDownTimer?.cancel()
             startNextPhase()
-        }
-        if (timerRunningFlow.value) {
-            startTimer()
+            if (timerRunningFlow.value) {
+                startTimer()
+            }
         }
     }
 

@@ -16,7 +16,6 @@
             android:name=".application.ITActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:launchMode="singleTop"
             android:theme="@style/Theme.IncentiveTimer.NoActionBar"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
