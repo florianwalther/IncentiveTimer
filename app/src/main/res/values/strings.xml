@@ -51,4 +51,5 @@
     <string name="skip_break_confirmation_message">Do you want to skip this break?</string>
     <string name="reward_unlocked_channel_name">Reward unlocked notifications</string>
     <string name="reward_unlocked_channel_description">Shows a notification when a reward was unlocked</string>
+    <string name="undo">Undo</string>
 </resources>

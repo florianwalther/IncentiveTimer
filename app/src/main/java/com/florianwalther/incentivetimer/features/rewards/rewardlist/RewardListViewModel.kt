@@ -1,8 +1,11 @@
 package com.florianwalther.incentivetimer.features.rewards.rewardlist
 
 import androidx.lifecycle.*
+import com.florianwalther.incentivetimer.data.Reward
 import com.florianwalther.incentivetimer.data.RewardDao
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -18,6 +21,13 @@ class RewardListViewModel @Inject constructor(
         savedStateHandle.getLiveData<Boolean>("showDeleteAllUnlockedRewardsDialogLiveData", false)
     val showDeleteAllUnlockedRewardsDialog: LiveData<Boolean> = showDeleteAllUnlockedRewardsDialogLiveData
 
+    private val eventChannel = Channel<Event>()
+    val events = eventChannel.receiveAsFlow()
+
+    sealed class Event {
+        data class ShowUndoRewardSnackbar(val reward: Reward) : Event()
+    }
+
     override fun onDeleteAllUnlockedRewardsClicked() {
         showDeleteAllUnlockedRewardsDialogLiveData.value = true
     }
@@ -31,5 +41,18 @@ class RewardListViewModel @Inject constructor(
 
     override fun onDeleteAllUnlockedRewardsDialogDismissed() {
         showDeleteAllUnlockedRewardsDialogLiveData.value = false
+    }
+
+    override fun onRewardSwiped(reward: Reward) {
+        viewModelScope.launch {
+            rewardDao.deleteReward(reward)
+            eventChannel.send(Event.ShowUndoRewardSnackbar(reward))
+        }
+    }
+
+    override fun onUndoDeleteRewardConfirmed(reward: Reward) {
+        viewModelScope.launch {
+            rewardDao.insertReward(reward)
+        }
     }
 }

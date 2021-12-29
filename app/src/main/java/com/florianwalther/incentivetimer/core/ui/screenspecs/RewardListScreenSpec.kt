@@ -1,5 +1,6 @@
 package com.florianwalther.incentivetimer.core.ui.screenspecs
 
+import androidx.compose.material.SnackbarResult
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -12,6 +13,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDeepLink
 import androidx.navigation.navDeepLink
 import com.florianwalther.incentivetimer.R
+import com.florianwalther.incentivetimer.core.util.exhaustive
 import com.florianwalther.incentivetimer.features.rewards.addeditreward.ADD_EDIT_REWARD_RESULT
 import com.florianwalther.incentivetimer.features.rewards.addeditreward.RESULT_REWARD_ADDED
 import com.florianwalther.incentivetimer.features.rewards.addeditreward.RESULT_REWARD_DELETE
@@ -19,6 +21,7 @@ import com.florianwalther.incentivetimer.features.rewards.addeditreward.RESULT_R
 import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListScreenAppBar
 import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListScreenContent
 import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListViewModel
+import kotlinx.coroutines.flow.collect
 
 object RewardListScreenSpec : ScreenSpec {
     override val navHostRoute: String = "reward_list"
@@ -44,12 +47,29 @@ object RewardListScreenSpec : ScreenSpec {
         val showDeleteAllUnlockedRewardsDialog
         by viewModel.showDeleteAllUnlockedRewardsDialog.observeAsState(false)
 
-        val addEditRewardResult = navController.currentBackStackEntry
-            ?.savedStateHandle?.getLiveData<String>(ADD_EDIT_REWARD_RESULT)?.observeAsState()
-
         val scaffoldState = rememberScaffoldState()
 
         val context = LocalContext.current
+
+        LaunchedEffect(Unit) {
+            viewModel.events.collect { event ->
+                when (event) {
+                    is RewardListViewModel.Event.ShowUndoRewardSnackbar -> {
+                        val snackbarResult = scaffoldState.snackbarHostState.showSnackbar(
+                            message = context.getString(R.string.reward_deleted),
+                            actionLabel = context.getString(R.string.undo),
+                        )
+                        if (snackbarResult == SnackbarResult.ActionPerformed) {
+                            viewModel.onUndoDeleteRewardConfirmed(event.reward)
+                        }
+                        Unit
+                    }
+                }.exhaustive
+            }
+        }
+
+        val addEditRewardResult = navController.currentBackStackEntry
+            ?.savedStateHandle?.getLiveData<String>(ADD_EDIT_REWARD_RESULT)?.observeAsState()
 
         LaunchedEffect(key1 = addEditRewardResult) {
             navController.currentBackStackEntry?.savedStateHandle?.remove<String>(
