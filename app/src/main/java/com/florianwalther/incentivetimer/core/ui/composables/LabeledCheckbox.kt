@@ -34,8 +34,7 @@ fun LabeledCheckbox(
             interactionSource = interactionSource,
             colors = colors,
         )
-        Spacer(Modifier.width(8.dp))
-        Text(text)
+        Text(text, modifier = Modifier.padding(end = 16.dp))
     }
 }
 

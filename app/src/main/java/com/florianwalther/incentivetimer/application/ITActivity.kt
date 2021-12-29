@@ -1,5 +1,6 @@
 package com.florianwalther.incentivetimer.application
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,11 +12,13 @@ import androidx.compose.material.icons.outlined.List
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -28,9 +31,15 @@ import com.florianwalther.incentivetimer.core.ui.screenspecs.ScreenSpec
 import com.florianwalther.incentivetimer.core.ui.screenspecs.TimerScreenSpec
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.receiveAsFlow
 
 @AndroidEntryPoint
 class ITActivity : ComponentActivity() {
+    private val deepLinkChannel = Channel<Intent?>(UNLIMITED)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -39,74 +48,92 @@ class ITActivity : ComponentActivity() {
             }
         }
     }
-}
 
-@Composable
-private fun ScreenContent() {
-    val navController = rememberNavController()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        deepLinkChannel.trySend(intent)
+    }
 
-    val screenSpec = ScreenSpec.allScreens[currentDestination?.route]
+    @Composable
+    private fun ScreenContent() {
+        val navController = rememberNavController()
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentDestination = navBackStackEntry?.destination
 
-    Scaffold(
-        topBar = {
-            val navBackStackEntry = navBackStackEntry
-            if (navBackStackEntry != null) {
-                screenSpec?.TopBar(navController, navBackStackEntry)
+        val screenSpec = ScreenSpec.allScreens[currentDestination?.route]
+
+        LaunchedEffect(Unit) {
+            deepLinkChannel.receiveAsFlow().collect { intent ->
+                navController.handleDeepLink(intent)
             }
-        },
-        bottomBar = {
-            val hideBottomBar = navBackStackEntry?.arguments?.getBoolean(ARG_HIDE_BOTTOM_BAR)
+        }
 
-            if (hideBottomBar == null || !hideBottomBar) {
-                BottomNavigation {
-                    bottomNavDestinations.forEach { bottomNavDestination ->
-                        BottomNavigationItem(
-                            icon = {
-                                Icon(bottomNavDestination.icon, contentDescription = null)
-                            },
-                            label = {
-                                Text(stringResource(bottomNavDestination.label))
-                            },
-                            alwaysShowLabel = false,
-                            selected = currentDestination?.hierarchy?.any { it.route == bottomNavDestination.screenSpec.navHostRoute } == true,
-                            onClick = {
-                                navController.navigate(bottomNavDestination.screenSpec.navHostRoute) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+        Scaffold(
+            topBar = {
+                val navBackStackEntry = navBackStackEntry
+                if (navBackStackEntry != null) {
+                    screenSpec?.TopBar(navController, navBackStackEntry)
+                }
+            },
+            bottomBar = {
+                val hideBottomBar = navBackStackEntry?.arguments?.getBoolean(ARG_HIDE_BOTTOM_BAR)
+
+                if (hideBottomBar == null || !hideBottomBar) {
+                    BottomNavigation {
+                        bottomNavDestinations.forEach { bottomNavDestination ->
+                            BottomNavigationItem(
+                                icon = {
+                                    Icon(bottomNavDestination.icon, contentDescription = null)
+                                },
+                                label = {
+                                    Text(stringResource(bottomNavDestination.label))
+                                },
+                                alwaysShowLabel = false,
+                                selected = currentDestination?.hierarchy?.any { it.route == bottomNavDestination.screenSpec.navHostRoute } == true,
+                                onClick = {
+                                    navController.navigate(bottomNavDestination.screenSpec.navHostRoute) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+        ) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = bottomNavDestinations[0].screenSpec.navHostRoute,
+                modifier = Modifier.padding(innerPadding),
+            ) {
+                ScreenSpec.allScreens.values.forEach { screen ->
+                    composable(
+                        route = screen.navHostRoute,
+                        arguments = screen.arguments,
+                        deepLinks = screen.deepLinks,
+                    ) { navBackStackEntry ->
+                        screen.Content(
+                            navController = navController,
+                            navBackStackEntry = navBackStackEntry
                         )
                     }
                 }
             }
         }
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = bottomNavDestinations[0].screenSpec.navHostRoute,
-            modifier = Modifier.padding(innerPadding),
-        ) {
-            ScreenSpec.allScreens.values.forEach { screen ->
-                composable(
-                    route = screen.navHostRoute,
-                    arguments = screen.arguments,
-                    deepLinks = screen.deepLinks,
-                ) { navBackStackEntry ->
-                    screen.Content(
-                        navController = navController,
-                        navBackStackEntry = navBackStackEntry
-                    )
-                }
-            }
+    }
+
+    @Preview(showBackground = true)
+    @Composable
+    fun ScreenContentPreview() {
+        IncentiveTimerTheme {
+            ScreenContent()
         }
     }
 }
-
 
 val bottomNavDestinations = listOf<BottomNavDestinations>(
     BottomNavDestinations.TimerScreen,
@@ -130,11 +157,3 @@ sealed class BottomNavDestinations(
 }
 
 const val ARG_HIDE_BOTTOM_BAR = "ARG_HIDE_BOTTOM_BAR"
-
-@Preview(showBackground = true)
-@Composable
-fun ScreenContentPreview() {
-    IncentiveTimerTheme {
-        ScreenContent()
-    }
-}

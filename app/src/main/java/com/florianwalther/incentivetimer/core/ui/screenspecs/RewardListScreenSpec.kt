@@ -9,6 +9,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
+import androidx.navigation.NavDeepLink
+import androidx.navigation.navDeepLink
 import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.features.rewards.addeditreward.ADD_EDIT_REWARD_RESULT
 import com.florianwalther.incentivetimer.features.rewards.addeditreward.RESULT_REWARD_ADDED
@@ -19,7 +21,13 @@ import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListS
 import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListViewModel
 
 object RewardListScreenSpec : ScreenSpec {
-    override val navHostRoute: String = "rewardList"
+    override val navHostRoute: String = "reward_list"
+
+    override val deepLinks: List<NavDeepLink> = listOf(
+        navDeepLink {
+            uriPattern = "https://www.incentivetimer.com/reward_list"
+        }
+    )
 
     @Composable
     override fun TopBar(navController: NavController, navBackStackEntry: NavBackStackEntry) {

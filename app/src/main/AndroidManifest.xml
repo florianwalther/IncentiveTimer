@@ -16,6 +16,7 @@
             android:name=".application.ITActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.IncentiveTimer.NoActionBar"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
@@ -24,7 +25,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <intent-filter>
-                <data android:scheme="https" android:host="www.incentivetimer.com" />
+                <data
+                    android:host="www.incentivetimer.com"
+                    android:scheme="https" />
             </intent-filter>
         </activity>
         <service android:name=".features.timer.TimerService" />
