@@ -52,4 +52,8 @@
     <string name="reward_unlocked_channel_name">Reward unlocked notifications</string>
     <string name="reward_unlocked_channel_description">Shows a notification when a reward was unlocked</string>
     <string name="undo">Undo</string>
+    <string name="selected_placeholder">%d selected</string>
+    <string name="delete_all_selected_items">Delete all selected items</string>
+    <string name="delete_rewards">Delete rewards</string>
+    <string name="delete_all_selected_rewards_confirmation_text">Do you really want to delete all selected rewards?</string>
 </resources>

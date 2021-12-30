@@ -82,6 +82,7 @@ private fun ScreenContent() {
                             onClick = {
                                 // TODO: 29/12/2021 Navigate to start destination not working after deep link -> library bug.
                                 //  Switch back to onNewIntent if bug doesn't get fixed
+                                //  Workaround: https://issuetracker.google.com/issues/194301895
                                 navController.navigate(bottomNavDestination.screenSpec.navHostRoute) {
                                     popUpTo(navController.graph.findStartDestination().id) {
                                         saveState = true

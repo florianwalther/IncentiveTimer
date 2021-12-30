@@ -4,16 +4,14 @@ import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,38 +25,64 @@ import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.core.ui.IconKey
 import com.florianwalther.incentivetimer.core.ui.ListBottomPadding
 import com.florianwalther.incentivetimer.core.ui.composables.SimpleConfirmationDialog
+import com.florianwalther.incentivetimer.core.ui.theme.ITBlue
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
+import com.florianwalther.incentivetimer.core.ui.theme.PrimaryLightAlpha
 import com.florianwalther.incentivetimer.data.Reward
 import kotlinx.coroutines.launch
 
 @Composable
 fun RewardListScreenAppBar(
+    multiSelectionModeActive: Boolean,
+    selectedItemCount: Int,
     actions: RewardListActions,
 ) {
     TopAppBar(
         title = {
-            Text(stringResource(R.string.reward_list))
+            if (multiSelectionModeActive) {
+                Text(stringResource(R.string.selected_placeholder, selectedItemCount))
+            } else {
+                Text(stringResource(R.string.reward_list))
+            }
         },
         actions = {
-            var expanded by remember { mutableStateOf(false) }
-            Box {
-                IconButton(onClick = { expanded = true }) {
-                    Icon(
-                        Icons.Default.MoreVert,
-                        contentDescription = stringResource(R.string.open_menu)
-                    )
+            if (multiSelectionModeActive) {
+                IconButton(onClick = actions::onDeleteAllSelectedItemsClicked) {
+                    Icon(imageVector = Icons.Default.Delete, contentDescription = stringResource(R.string.delete_all_selected_items))
                 }
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }) {
-                    DropdownMenuItem(onClick = {
-                        expanded = false
-                        actions.onDeleteAllUnlockedRewardsClicked()
-                    }) {
-                        Text(stringResource(R.string.delete_all_unlocked_rewards))
+            } else {
+                var expanded by remember { mutableStateOf(false) }
+                Box {
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(
+                            Icons.Default.MoreVert,
+                            contentDescription = stringResource(R.string.open_menu)
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }) {
+                        DropdownMenuItem(onClick = {
+                            expanded = false
+                            actions.onDeleteAllUnlockedRewardsClicked()
+                        }) {
+                            Text(stringResource(R.string.delete_all_unlocked_rewards))
+                        }
                     }
                 }
             }
+        },
+        navigationIcon = if (multiSelectionModeActive) {
+            {
+                IconButton(onClick = actions::onCancelMultiSelectionModeClicked) {
+                    Icon(
+                        Icons.Default.ArrowBack,
+                        contentDescription = stringResource(R.string.close)
+                    )
+                }
+            }
+        } else {
+            null
         }
     )
 }
@@ -67,7 +91,8 @@ fun RewardListScreenAppBar(
 fun RewardListScreenContent(
     rewards: List<Reward>,
     showDeleteAllUnlockedRewardsDialog: Boolean,
-    onRewardItemClicked: (Long) -> Unit,
+    showDeleteAllSelectedRewardsDialog: Boolean,
+    selectedRewards: List<Reward>,
     onAddNewRewardClicked: () -> Unit,
     actions: RewardListActions,
     scaffoldState: ScaffoldState = rememberScaffoldState(),
@@ -101,6 +126,7 @@ fun RewardListScreenContent(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(rewards, key = { it.id }) { reward ->
+                    val selected = selectedRewards.contains(reward)
                     val dismissState = rememberDismissState(
                         confirmStateChange = { dismissValue ->
                             if (dismissValue == DismissValue.DismissedToEnd || dismissValue == DismissValue.DismissedToStart) {
@@ -116,18 +142,18 @@ fun RewardListScreenContent(
                         ) {
                             RewardItem(
                                 reward = reward,
-                                onItemClicked = { id ->
-                                    onRewardItemClicked(id)
-                                },
+                                selected = selected,
+                                onItemClicked = actions::onRewardClicked,
+                                onItemLongClicked = actions::onRewardLongClicked,
                             )
                         }
                     } else {
                         RewardItem(
                             reward = reward,
-                            onItemClicked = { id ->
-                                onRewardItemClicked(id)
-                            },
-                            modifier = Modifier.animateItemPlacement()
+                            selected = selected,
+                            onItemClicked = actions::onRewardClicked,
+                            onItemLongClicked = actions::onRewardLongClicked,
+                            modifier = Modifier.animateItemPlacement(),
                         )
                     }
                 }
@@ -165,19 +191,38 @@ fun RewardListScreenContent(
             confirmAction = actions::onDeleteAllUnlockedRewardsConfirmed
         )
     }
+
+    if (showDeleteAllSelectedRewardsDialog) {
+        SimpleConfirmationDialog(
+            title = R.string.delete_rewards,
+            text = R.string.delete_all_selected_rewards_confirmation_text,
+            dismissAction = actions::onDeleteAllSelectedRewardsDialogDismissed,
+            confirmAction = actions::onDeleteAllSelectedRewardsConfirmed
+        )
+    }
 }
 
 @Composable
 private fun RewardItem(
     reward: Reward,
-    onItemClicked: (Long) -> Unit,
+    selected: Boolean,
+    onItemClicked: (Reward) -> Unit,
+    onItemLongClicked: (Reward) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
-        onClick = { onItemClicked(reward.id) },
         modifier = modifier
             .fillMaxWidth()
             .padding(8.dp)
+            .combinedClickable(
+                onClick = {
+                    onItemClicked(reward)
+                },
+                onLongClick = {
+                    onItemLongClicked(reward)
+                }
+            ),
+        backgroundColor = if (selected) ITBlue.copy(alpha = PrimaryLightAlpha) else MaterialTheme.colors.surface
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -230,7 +275,10 @@ private fun RewardItemPreview() {
         Surface {
             RewardItem(
                 Reward("Title mmmmmmmmmmmmmmmmmmmmm", 5, IconKey.BATH_TUB),
-                onItemClicked = {})
+                onItemClicked = {},
+                onItemLongClicked = {},
+                selected = false,
+            )
         }
     }
 }
@@ -255,7 +303,11 @@ private fun RewardItemUnlockedPreview() {
                     5,
                     IconKey.BATH_TUB,
                     isUnlocked = true
-                ), onItemClicked = {})
+                ),
+                onItemClicked = {},
+                onItemLongClicked = {},
+                selected = true,
+            )
         }
     }
 }
@@ -281,15 +333,22 @@ private fun ScreenContentPreview() {
                     Reward(name = "TV", 60, iconKey = IconKey.TV),
                 ),
                 onAddNewRewardClicked = {},
-                onRewardItemClicked = {},
                 showDeleteAllUnlockedRewardsDialog = false,
+                showDeleteAllSelectedRewardsDialog = false,
                 actions = object : RewardListActions {
                     override fun onDeleteAllUnlockedRewardsClicked() {}
                     override fun onDeleteAllUnlockedRewardsConfirmed() {}
                     override fun onDeleteAllUnlockedRewardsDialogDismissed() {}
+                    override fun onRewardClicked(reward: Reward) {}
+                    override fun onRewardLongClicked(reward: Reward) {}
+                    override fun onCancelMultiSelectionModeClicked() {}
                     override fun onRewardSwiped(reward: Reward) {}
                     override fun onUndoDeleteRewardConfirmed(reward: Reward) {}
-                }
+                    override fun onDeleteAllSelectedRewardsConfirmed() {}
+                    override fun onDeleteAllSelectedRewardsDialogDismissed() {}
+                    override fun onDeleteAllSelectedItemsClicked() {}
+                },
+                selectedRewards = listOf(),
             )
         }
     }

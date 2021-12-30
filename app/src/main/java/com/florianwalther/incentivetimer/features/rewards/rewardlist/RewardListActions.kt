@@ -6,6 +6,12 @@ interface RewardListActions {
     fun onDeleteAllUnlockedRewardsClicked()
     fun onDeleteAllUnlockedRewardsConfirmed()
     fun onDeleteAllUnlockedRewardsDialogDismissed()
+    fun onDeleteAllSelectedRewardsConfirmed()
+    fun onDeleteAllSelectedRewardsDialogDismissed()
     fun onRewardSwiped(reward: Reward)
     fun onUndoDeleteRewardConfirmed(reward: Reward)
+    fun onRewardClicked(reward: Reward)
+    fun onRewardLongClicked(reward: Reward)
+    fun onCancelMultiSelectionModeClicked()
+    fun onDeleteAllSelectedItemsClicked()
 }

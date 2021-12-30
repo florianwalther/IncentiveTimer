@@ -22,6 +22,9 @@ import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListS
 import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListScreenContent
 import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListViewModel
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import logcat.logcat
 
 object RewardListScreenSpec : ScreenSpec {
     override val navHostRoute: String = "reward_list"
@@ -35,8 +38,13 @@ object RewardListScreenSpec : ScreenSpec {
     @Composable
     override fun TopBar(navController: NavController, navBackStackEntry: NavBackStackEntry) {
         val viewModel: RewardListViewModel = hiltViewModel(navBackStackEntry)
+        val multiSelectionModeActive by viewModel.multiSelectionModeActive.observeAsState(false)
+        val selectedItemCount by viewModel.selectedItemCount.observeAsState(0)
+
         RewardListScreenAppBar(
-            actions = viewModel
+            multiSelectionModeActive = multiSelectionModeActive,
+            selectedItemCount = selectedItemCount,
+            actions = viewModel,
         )
     }
 
@@ -44,15 +52,18 @@ object RewardListScreenSpec : ScreenSpec {
     override fun Content(navController: NavController, navBackStackEntry: NavBackStackEntry) {
         val viewModel: RewardListViewModel = hiltViewModel(navBackStackEntry)
         val rewards by viewModel.rewards.observeAsState(listOf())
+        val selectedRewards by viewModel.selectedRewards.observeAsState(listOf())
         val showDeleteAllUnlockedRewardsDialog
-        by viewModel.showDeleteAllUnlockedRewardsDialog.observeAsState(false)
+                by viewModel.showDeleteAllUnlockedRewardsDialog.observeAsState(false)
+        val showDeleteAllSelectedRewardsDialog
+                by viewModel.showDeleteAllSelectedRewardsDialog.observeAsState(false)
 
         val scaffoldState = rememberScaffoldState()
 
         val context = LocalContext.current
 
         LaunchedEffect(Unit) {
-            viewModel.events.collect { event ->
+            viewModel.events.collectLatest { event ->
                 when (event) {
                     is RewardListViewModel.Event.ShowUndoRewardSnackbar -> {
                         val snackbarResult = scaffoldState.snackbarHostState.showSnackbar(
@@ -63,6 +74,9 @@ object RewardListScreenSpec : ScreenSpec {
                             viewModel.onUndoDeleteRewardConfirmed(event.reward)
                         }
                         Unit
+                    }
+                    is RewardListViewModel.Event.NavigateToEditRewardScreen -> {
+                        navController.navigate(AddEditRewardScreenSpec.buildRoute(event.reward.id))
                     }
                 }.exhaustive
             }
@@ -92,14 +106,13 @@ object RewardListScreenSpec : ScreenSpec {
 
         RewardListScreenContent(
             rewards = rewards,
+            showDeleteAllUnlockedRewardsDialog = showDeleteAllUnlockedRewardsDialog,
+            showDeleteAllSelectedRewardsDialog = showDeleteAllSelectedRewardsDialog,
+            selectedRewards = selectedRewards,
             onAddNewRewardClicked = {
                 navController.navigate(AddEditRewardScreenSpec.buildRoute())
             },
-            onRewardItemClicked = { id ->
-                navController.navigate(AddEditRewardScreenSpec.buildRoute(id))
-            },
             scaffoldState = scaffoldState,
-            showDeleteAllUnlockedRewardsDialog = showDeleteAllUnlockedRewardsDialog,
             actions = viewModel,
         )
     }
