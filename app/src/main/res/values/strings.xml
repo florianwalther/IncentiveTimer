@@ -56,4 +56,7 @@
     <string name="delete_all_selected_items">Delete all selected items</string>
     <string name="delete_rewards">Delete rewards</string>
     <string name="delete_all_selected_rewards_confirmation_text">Do you really want to delete all selected rewards?</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
+    <string name="paused">Paused</string>
 </resources>

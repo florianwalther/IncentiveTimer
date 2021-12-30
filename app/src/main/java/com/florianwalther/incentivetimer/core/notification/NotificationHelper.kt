@@ -1,10 +1,8 @@
 package com.florianwalther.incentivetimer.core.notification
 
 import android.app.PendingIntent
-import android.app.TaskStackBuilder
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
@@ -14,7 +12,6 @@ import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.application.ITActivity
 import com.florianwalther.incentivetimer.data.Reward
 import com.florianwalther.incentivetimer.features.timer.PomodoroPhase
-import com.florianwalther.incentivetimer.features.timer.PomodoroTimerState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -62,12 +59,70 @@ class NotificationHelper @Inject constructor(
             .setSilent(true)
             .setOnlyAlertOnce(true)
 
-    fun updateTimerNotification(timerState: PomodoroTimerState) {
+    fun updateTimerServiceNotification(
+        currentPhase: PomodoroPhase,
+        timeLeftInMillis: Long,
+        timerRunning: Boolean
+    ) {
+        val actionIntent = getTimerNotificationActionIntent(
+            currentPhase, timeLeftInMillis, timerRunning
+        )
+
         val notificationUpdate = getBaseTimerServiceNotification()
-            .setContentTitle(applicationContext.getString(timerState.currentPhase.readableName))
-            .setContentText(timerState.timeLeftInMillis.toString())
+            .setContentTitle(applicationContext.getString(currentPhase.readableName))
+            .setContentText(timeLeftInMillis.toString())
+            .addAction(
+                R.drawable.ic_stop,
+                applicationContext.getString(R.string.pause),
+                actionIntent
+            )
             .build()
+
         notificationManager.notify(TIMER_SERVICE_NOTIFICATION_ID, notificationUpdate)
+    }
+
+    fun showResumeTimerNotification(
+        currentPhase: PomodoroPhase,
+        timeLeftInMillis: Long,
+        timerRunning: Boolean
+    ) {
+        val actionIntent = getTimerNotificationActionIntent(
+            currentPhase, timeLeftInMillis, timerRunning
+        )
+
+        val title = applicationContext.getString(currentPhase.readableName) +
+                " (" + applicationContext.getString(R.string.paused) + ")"
+
+        val notificationUpdate = getBaseTimerServiceNotification()
+            .setContentTitle(title)
+            .setContentText(timeLeftInMillis.toString())
+            .addAction(
+                R.drawable.ic_play,
+                applicationContext.getString(R.string.resume),
+                actionIntent
+            )
+            .build()
+
+        notificationManager.notify(RESUME_TIMER_NOTIFICATION_ID, notificationUpdate)
+    }
+
+    private fun getTimerNotificationActionIntent(
+        currentPhase: PomodoroPhase,
+        timeLeftInMillis: Long,
+        timerRunning: Boolean,
+    ): PendingIntent {
+        val broadcastIntent =
+            Intent(applicationContext, TimerNotificationBroadcastReceiver::class.java).apply {
+                putExtra(EXTRA_POMODORO_PHASE, currentPhase)
+                putExtra(EXTRA_TIME_LEFT_IN_MILLIS, timeLeftInMillis)
+                putExtra(EXTRA_TIMER_RUNNING, timerRunning)
+            }
+        return PendingIntent.getBroadcast(
+            applicationContext,
+            0,
+            broadcastIntent,
+            pendingIntentFlags
+        )
     }
 
     fun showTimerCompletedNotification(finishedPhase: PomodoroPhase) {
@@ -116,6 +171,10 @@ class NotificationHelper @Inject constructor(
         notificationManager.cancel(TIMER_COMPLETED_NOTIFICATION_ID)
     }
 
+    fun removeResumeTimerNotification() {
+        notificationManager.cancel(RESUME_TIMER_NOTIFICATION_ID)
+    }
+
     private fun createNotificationChannels() {
         val timerServiceChannel = NotificationChannelCompat.Builder(
             TIMER_SERVICE_CHANNEL_ID,
@@ -156,4 +215,5 @@ private const val TIMER_SERVICE_CHANNEL_ID = "timer_service_notification_channel
 private const val TIMER_COMPLETED_CHANNEL_ID = "timer_completed_notification_channel"
 private const val REWARD_UNLOCKED_CHANNEL_ID = "reward_unlocked_notification_channel"
 const val TIMER_SERVICE_NOTIFICATION_ID = -1
-private const val TIMER_COMPLETED_NOTIFICATION_ID = -2
+const val RESUME_TIMER_NOTIFICATION_ID = -2
+private const val TIMER_COMPLETED_NOTIFICATION_ID = -3

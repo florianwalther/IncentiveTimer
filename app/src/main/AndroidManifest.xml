@@ -30,6 +30,7 @@
             </intent-filter>
         </activity>
         <service android:name=".features.timer.TimerService" />
+        <receiver android:name=".core.notification.TimerNotificationBroadcastReceiver" />
     </application>
 
 </manifest>

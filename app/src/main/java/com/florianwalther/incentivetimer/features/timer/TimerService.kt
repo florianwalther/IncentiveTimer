@@ -1,21 +1,14 @@
 package com.florianwalther.incentivetimer.features.timer
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
-import android.os.Build
 import android.os.IBinder
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.core.notification.NotificationHelper
 import com.florianwalther.incentivetimer.core.notification.TIMER_SERVICE_NOTIFICATION_ID
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -39,7 +32,11 @@ class TimerService : Service() {
 
         serviceScope.launch {
             pomodoroTimerManager.pomodoroTimerState.collectLatest { timerState ->
-                notificationHelper.updateTimerNotification(timerState)
+                notificationHelper.updateTimerServiceNotification(
+                    currentPhase = timerState.currentPhase,
+                    timeLeftInMillis = timerState.timeLeftInMillis,
+                    timerRunning = timerState.timerRunning
+                )
             }
         }
         return START_STICKY
