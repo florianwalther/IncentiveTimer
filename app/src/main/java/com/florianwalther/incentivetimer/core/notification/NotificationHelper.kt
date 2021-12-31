@@ -10,6 +10,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
 import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.application.ITActivity
+import com.florianwalther.incentivetimer.core.util.formatMillisecondsToTimeString
 import com.florianwalther.incentivetimer.data.Reward
 import com.florianwalther.incentivetimer.features.timer.PomodoroPhase
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -70,7 +71,7 @@ class NotificationHelper @Inject constructor(
 
         val notificationUpdate = getBaseTimerServiceNotification()
             .setContentTitle(applicationContext.getString(currentPhase.readableName))
-            .setContentText(timeLeftInMillis.toString())
+            .setContentText(formatMillisecondsToTimeString(timeLeftInMillis))
             .addAction(
                 R.drawable.ic_stop,
                 applicationContext.getString(R.string.pause),

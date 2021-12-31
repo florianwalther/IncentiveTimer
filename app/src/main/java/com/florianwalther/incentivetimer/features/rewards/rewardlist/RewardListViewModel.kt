@@ -143,7 +143,7 @@ class RewardListViewModel @Inject constructor(
 
     override fun onRewardSwiped(reward: Reward) {
         viewModelScope.launch {
-            rewardDao.deleteReward(reward)
+//            rewardDao.deleteReward(reward)
             eventChannel.send(Event.ShowUndoRewardSnackbar(reward))
         }
     }

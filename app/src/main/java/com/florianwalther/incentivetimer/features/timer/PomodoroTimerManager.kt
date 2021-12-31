@@ -26,9 +26,9 @@ enum class PomodoroPhase(@StringRes val readableName: Int) {
     val isBreak get() = this == SHORT_BREAK || this == LONG_BREAK
 }
 
-const val POMODORO_DURATION_IN_MILLIS = /*25 * 60 * 1_000L*/ 12000L
-const val SHORT_BREAK_DURATION_IN_MILLIS = /*5 * 60 * 1_000L*/ 5000L
-const val LONG_BREAK_DURATION_IN_MILLIS = /*15 * 60 * 1_000L*/ 8000L
+const val POMODORO_DURATION_IN_MILLIS = /*25 * 60 * 1_000L*/ 60 * 60 * 1_000L
+const val SHORT_BREAK_DURATION_IN_MILLIS = /*5 * 60 * 1_000L*/ 5_000L
+const val LONG_BREAK_DURATION_IN_MILLIS = /*15 * 60 * 1_000L*/ 8_000L
 const val POMODOROS_PER_SET = 4
 
 @Singleton

@@ -25,6 +25,7 @@ import com.florianwalther.incentivetimer.core.ui.composables.RoundedCornerCircul
 import com.florianwalther.incentivetimer.core.ui.composables.SimpleConfirmationDialog
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
 import com.florianwalther.incentivetimer.core.ui.theme.PrimaryLightAlpha
+import com.florianwalther.incentivetimer.core.util.formatMillisecondsToTimeString
 
 @Composable
 fun TimerScreenAppBar(
@@ -168,7 +169,7 @@ private fun Timer(
             strokeWidth = 16.dp,
         )
         Text(
-            text = timeLeftInMillis.toString(),
+            text = formatMillisecondsToTimeString(timeLeftInMillis),
             style = MaterialTheme.typography.h4,
             modifier = Modifier.align(Alignment.Center)
         )
