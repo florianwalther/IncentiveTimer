@@ -3,22 +3,26 @@ package com.florianwalther.incentivetimer.features.rewards.rewardlist
 import androidx.lifecycle.*
 import com.florianwalther.incentivetimer.data.Reward
 import com.florianwalther.incentivetimer.data.RewardDao
+import com.florianwalther.incentivetimer.di.MainDispatcher
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import logcat.logcat
 import javax.inject.Inject
 
 @HiltViewModel
 class RewardListViewModel @Inject constructor(
     private val rewardDao: RewardDao,
     savedStateHandle: SavedStateHandle,
+    @MainDispatcher dispatcher: CoroutineDispatcher,
 ) : ViewModel(), RewardListActions {
 
     private val rewardsFlow = rewardDao.getAllRewardsSortedByIsUnlockedDesc()
-    val rewards = rewardsFlow.asLiveData()
+    val rewards = rewardsFlow.asLiveData(dispatcher)
 
     private val selectedRewardsLiveData =
         savedStateHandle.getLiveData<List<Reward>>("selectedRewardsLiveData", listOf())
@@ -56,6 +60,23 @@ class RewardListViewModel @Inject constructor(
     sealed class Event {
         data class ShowUndoRewardSnackbar(val reward: Reward) : Event()
         data class NavigateToEditRewardScreen(val reward: Reward) : Event()
+    }
+
+    override fun onDeleteAllSelectedItemsClicked() {
+        showDeleteAllSelectedRewardsDialogLiveData.value = true
+    }
+
+    override fun onDeleteAllSelectedRewardsConfirmed() {
+        showDeleteAllSelectedRewardsDialogLiveData.value = false
+        viewModelScope.launch {
+            val selectedRewards = selectedRewardsLiveData.value ?: emptyList()
+            rewardDao.deleteRewards(selectedRewards)
+            cancelMultiSelectionMode()
+        }
+    }
+
+    override fun onDeleteAllSelectedRewardsDialogDismissed() {
+        showDeleteAllSelectedRewardsDialogLiveData.value = false
     }
 
     override fun onDeleteAllUnlockedRewardsClicked() {
@@ -100,25 +121,9 @@ class RewardListViewModel @Inject constructor(
     }
 
     private fun cancelMultiSelectionMode() {
+        if (multiSelectionModeActive.value == false) return
         selectedRewardsLiveData.value = emptyList()
         multiSelectionModeActiveLiveData.value = false
-    }
-
-    override fun onDeleteAllSelectedItemsClicked() {
-        showDeleteAllSelectedRewardsDialogLiveData.value = true
-    }
-
-    override fun onDeleteAllSelectedRewardsConfirmed() {
-        showDeleteAllSelectedRewardsDialogLiveData.value = false
-        viewModelScope.launch {
-            val selectedRewards = selectedRewardsLiveData.value ?: emptyList()
-            rewardDao.deleteRewards(selectedRewards)
-            cancelMultiSelectionMode()
-        }
-    }
-
-    override fun onDeleteAllSelectedRewardsDialogDismissed() {
-        showDeleteAllSelectedRewardsDialogLiveData.value = false
     }
 
     private fun addOrRemoveSelectedReward(reward: Reward) {
@@ -143,7 +148,7 @@ class RewardListViewModel @Inject constructor(
 
     override fun onRewardSwiped(reward: Reward) {
         viewModelScope.launch {
-//            rewardDao.deleteReward(reward)
+            rewardDao.deleteReward(reward)
             eventChannel.send(Event.ShowUndoRewardSnackbar(reward))
         }
     }

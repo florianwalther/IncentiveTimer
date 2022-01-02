@@ -11,7 +11,7 @@ class FakeRewardDao(
     private val dataFlow = MutableStateFlow<Map<Long, Reward>>(initialData)
 
     override fun getAllRewardsSortedByIsUnlockedDesc(): Flow<List<Reward>> =
-        dataFlow.map { it.values.toList() }
+        dataFlow.map { it.values.sortedByDescending { it.isUnlocked }.toList() }
 
     override fun getAllNotUnlockedRewards(): Flow<List<Reward>> {
         TODO("Not yet implemented")
@@ -27,10 +27,6 @@ class FakeRewardDao(
         }
     }
 
-    private fun updateRewardMap(block: MutableMap<Long, Reward>.() -> Unit) {
-        dataFlow.value = dataFlow.value.toMutableMap().apply(block).toMap()
-    }
-
     override suspend fun updateReward(reward: Reward) {
         TODO("Not yet implemented")
     }
@@ -41,11 +37,25 @@ class FakeRewardDao(
         }
     }
 
-    override suspend fun deleteRewards(reward: List<Reward>) {
-        TODO("Not yet implemented")
+    override suspend fun deleteRewards(rewards: List<Reward>) {
+        updateRewardMap {
+            rewards.forEach { reward ->
+                remove(reward.id)
+            }
+        }
     }
 
     override suspend fun deleteAllUnlockedRewards() {
-        TODO("Not yet implemented")
+        updateRewardMap {
+            values.filter { reward ->
+                reward.isUnlocked
+            }.forEach { unlockedReward ->
+                remove(unlockedReward.id)
+            }
+        }
+    }
+
+    private fun updateRewardMap(block: MutableMap<Long, Reward>.() -> Unit) {
+        dataFlow.value = dataFlow.value.toMutableMap().apply(block).toMap()
     }
 }
