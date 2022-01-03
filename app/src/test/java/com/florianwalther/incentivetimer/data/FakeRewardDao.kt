@@ -5,30 +5,41 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
 class FakeRewardDao(
-    initialData: LinkedHashMap<Long, Reward> = LinkedHashMap()
+    rewards: LinkedHashMap<Long, Reward> = LinkedHashMap()
 ) : RewardDao {
 
-    private val dataFlow = MutableStateFlow<Map<Long, Reward>>(initialData)
+    private val rewards = MutableStateFlow<Map<Long, Reward>>(rewards)
 
     override fun getAllRewardsSortedByIsUnlockedDesc(): Flow<List<Reward>> =
-        dataFlow.map { it.values.sortedByDescending { it.isUnlocked }.toList() }
+        rewards.map { it.values.sortedByDescending { it.isUnlocked }.toList() }
 
     override fun getAllNotUnlockedRewards(): Flow<List<Reward>> {
         TODO("Not yet implemented")
     }
 
-    override fun getRewardById(rewardId: Long): Flow<Reward?> {
-        TODO("Not yet implemented")
-    }
+    override fun getRewardById(rewardId: Long): Flow<Reward?> =
+        rewards.map { rewardMap ->
+            rewardMap[rewardId]
+        }
+
 
     override suspend fun insertReward(reward: Reward) {
+        val rewardWithId = if (reward.id > 0) {
+            reward
+        } else {
+            val newId = getCurrentHighestRewardId() + 1
+            reward.copy(id = newId)
+        }
+
         updateRewardMap {
-            this[reward.id] = reward
+            this[reward.id] = rewardWithId
         }
     }
 
     override suspend fun updateReward(reward: Reward) {
-        TODO("Not yet implemented")
+        updateRewardMap {
+            this[reward.id] = reward
+        }
     }
 
     override suspend fun deleteReward(reward: Reward) {
@@ -56,6 +67,9 @@ class FakeRewardDao(
     }
 
     private fun updateRewardMap(block: MutableMap<Long, Reward>.() -> Unit) {
-        dataFlow.value = dataFlow.value.toMutableMap().apply(block).toMap()
+        rewards.value = rewards.value.toMutableMap().apply(block).toMap()
     }
+
+    private fun getCurrentHighestRewardId(): Long =
+        rewards.value.keys.lastOrNull() ?: 0L
 }

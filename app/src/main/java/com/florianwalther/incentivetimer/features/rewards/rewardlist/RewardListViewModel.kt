@@ -3,26 +3,23 @@ package com.florianwalther.incentivetimer.features.rewards.rewardlist
 import androidx.lifecycle.*
 import com.florianwalther.incentivetimer.data.Reward
 import com.florianwalther.incentivetimer.data.RewardDao
-import com.florianwalther.incentivetimer.di.MainDispatcher
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import logcat.logcat
 import javax.inject.Inject
 
 @HiltViewModel
 class RewardListViewModel @Inject constructor(
     private val rewardDao: RewardDao,
     savedStateHandle: SavedStateHandle,
-    @MainDispatcher dispatcher: CoroutineDispatcher,
 ) : ViewModel(), RewardListActions {
 
     private val rewardsFlow = rewardDao.getAllRewardsSortedByIsUnlockedDesc()
-    val rewards = rewardsFlow.asLiveData(dispatcher)
+    val rewards = rewardsFlow.asLiveData()
 
     private val selectedRewardsLiveData =
         savedStateHandle.getLiveData<List<Reward>>("selectedRewardsLiveData", listOf())
@@ -54,12 +51,12 @@ class RewardListViewModel @Inject constructor(
     val showDeleteAllUnlockedRewardsDialog: LiveData<Boolean> =
         showDeleteAllUnlockedRewardsDialogLiveData
 
-    private val eventChannel = Channel<Event>()
-    val events = eventChannel.receiveAsFlow()
+    private val eventChannel = Channel<RewardListEvent>()
+    val events: Flow<RewardListEvent> = eventChannel.receiveAsFlow()
 
-    sealed class Event {
-        data class ShowUndoRewardSnackbar(val reward: Reward) : Event()
-        data class NavigateToEditRewardScreen(val reward: Reward) : Event()
+    sealed class RewardListEvent {
+        data class ShowUndoRewardSnackbar(val reward: Reward) : RewardListEvent()
+        data class NavigateToEditRewardScreen(val reward: Reward) : RewardListEvent()
     }
 
     override fun onDeleteAllSelectedItemsClicked() {
@@ -98,7 +95,7 @@ class RewardListViewModel @Inject constructor(
         val multiSelectionModeActive = multiSelectionModeActiveLiveData.value
         if (multiSelectionModeActive == false) {
             viewModelScope.launch {
-                eventChannel.send(Event.NavigateToEditRewardScreen(reward))
+                eventChannel.send(RewardListEvent.NavigateToEditRewardScreen(reward))
             }
         } else {
             val selectedRewards = selectedRewardsLiveData.value
@@ -149,7 +146,7 @@ class RewardListViewModel @Inject constructor(
     override fun onRewardSwiped(reward: Reward) {
         viewModelScope.launch {
             rewardDao.deleteReward(reward)
-            eventChannel.send(Event.ShowUndoRewardSnackbar(reward))
+            eventChannel.send(RewardListEvent.ShowUndoRewardSnackbar(reward))
         }
     }
 

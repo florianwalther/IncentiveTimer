@@ -21,10 +21,7 @@ import com.florianwalther.incentivetimer.features.rewards.addeditreward.RESULT_R
 import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListScreenAppBar
 import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListScreenContent
 import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListViewModel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import logcat.logcat
 
 object RewardListScreenSpec : ScreenSpec {
     override val navHostRoute: String = "reward_list"
@@ -65,7 +62,7 @@ object RewardListScreenSpec : ScreenSpec {
         LaunchedEffect(Unit) {
             viewModel.events.collectLatest { event ->
                 when (event) {
-                    is RewardListViewModel.Event.ShowUndoRewardSnackbar -> {
+                    is RewardListViewModel.RewardListEvent.ShowUndoRewardSnackbar -> {
                         val snackbarResult = scaffoldState.snackbarHostState.showSnackbar(
                             message = context.getString(R.string.reward_deleted),
                             actionLabel = context.getString(R.string.undo),
@@ -75,7 +72,7 @@ object RewardListScreenSpec : ScreenSpec {
                         }
                         Unit
                     }
-                    is RewardListViewModel.Event.NavigateToEditRewardScreen -> {
+                    is RewardListViewModel.RewardListEvent.NavigateToEditRewardScreen -> {
                         navController.navigate(AddEditRewardScreenSpec.buildRoute(event.reward.id))
                     }
                 }.exhaustive

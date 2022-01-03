@@ -20,8 +20,6 @@ class RewardListViewModelTest {
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
-    private lateinit var viewModel: RewardListViewModel
-
     private val reward1 = Reward(
         name = "Reward 1",
         chanceInPercent = 10,
@@ -44,22 +42,20 @@ class RewardListViewModelTest {
         id = 3,
     )
 
-    private val data = linkedMapOf(
+    private val data = linkedMapOf<Long, Reward>(
         1L to reward1,
         2L to reward2,
         3L to reward3
     )
 
-    private val fakeRewardDao = FakeRewardDao(data)
+    private lateinit var viewModel: RewardListViewModel
 
     @Before
     fun setUp() {
-        val dispatcher = UnconfinedTestDispatcher()
-        Dispatchers.setMain(dispatcher)
+        Dispatchers.setMain(UnconfinedTestDispatcher())
         viewModel = RewardListViewModel(
-            rewardDao = fakeRewardDao,
+            rewardDao = FakeRewardDao(data),
             savedStateHandle = SavedStateHandle(),
-            dispatcher = dispatcher
         )
     }
 
@@ -76,12 +72,27 @@ class RewardListViewModelTest {
     }
 
     @Test
+    fun multiSelectionModeActive_defaultValueFalse() {
+        assertThat(viewModel.multiSelectionModeActive.getOrAwaitValue()).isFalse()
+    }
+
+    @Test
+    fun showDeleteAllSelectedRewardsDialog_defaultValueFalse() {
+        assertThat(viewModel.showDeleteAllSelectedRewardsDialog.getOrAwaitValue()).isFalse()
+    }
+
+    @Test
+    fun showDeleteAllUnlockedRewardsDialog_defaultValueFalse() {
+        assertThat(viewModel.showDeleteAllUnlockedRewardsDialog.getOrAwaitValue()).isFalse()
+    }
+
+    @Test
     fun onRewardClicked_multiSelectionModeInactive_sendNavigateToEditRewardScreenEvent() = runTest {
         viewModel.onRewardClicked(reward1)
 
         viewModel.events.test {
             assertThat(awaitItem()).isEqualTo(
-                RewardListViewModel.Event.NavigateToEditRewardScreen(reward1)
+                RewardListViewModel.RewardListEvent.NavigateToEditRewardScreen(reward1)
             )
         }
     }
@@ -173,7 +184,6 @@ class RewardListViewModelTest {
         assertThat(viewModel.showDeleteAllSelectedRewardsDialog.getOrAwaitValue()).isFalse()
     }
 
-
     @Test
     fun onDeleteAllSelectedRewardsConfirmed_deletesAllSelectedRewards() {
         viewModel.onRewardLongClicked(reward1)
@@ -184,19 +194,20 @@ class RewardListViewModelTest {
         assertThat(viewModel.rewards.getOrAwaitValue()).containsExactly(reward2, reward3)
     }
 
+
+    @Test
+    fun onDeleteAllSelectedRewardsDialogDismissed_hidesDeleteAllSelectedRewardsDialog() {
+        viewModel.onDeleteAllSelectedItemsClicked()
+        viewModel.onDeleteAllSelectedRewardsDialogDismissed()
+
+        assertThat(viewModel.showDeleteAllSelectedRewardsDialog.getOrAwaitValue()).isFalse()
+    }
+
     @Test
     fun onDeleteAllUnlockedRewardsClicked_showsDeleteAllUnlockedRewardsDialog() {
         viewModel.onDeleteAllUnlockedRewardsClicked()
 
         assertThat(viewModel.showDeleteAllUnlockedRewardsDialog.getOrAwaitValue()).isTrue()
-    }
-
-    @Test
-    fun onDeleteAllUnlockedRewardsDialogDismissed_hidesDeleteAllUnlockedRewardsDialog() {
-        viewModel.onDeleteAllUnlockedRewardsClicked()
-        viewModel.onDeleteAllUnlockedRewardsDialogDismissed()
-
-        assertThat(viewModel.showDeleteAllUnlockedRewardsDialog.getOrAwaitValue()).isFalse()
     }
 
     @Test
@@ -216,6 +227,14 @@ class RewardListViewModelTest {
     }
 
     @Test
+    fun onDeleteAllUnlockedRewardsDialogDismissed_hidesDeleteAllUnlockedRewardsDialog() {
+        viewModel.onDeleteAllUnlockedRewardsClicked()
+        viewModel.onDeleteAllUnlockedRewardsDialogDismissed()
+
+        assertThat(viewModel.showDeleteAllUnlockedRewardsDialog.getOrAwaitValue()).isFalse()
+    }
+
+    @Test
     fun onRewardSwiped_deletesReward() = runTest {
         viewModel.onRewardSwiped(reward1)
 
@@ -228,7 +247,7 @@ class RewardListViewModelTest {
 
         viewModel.events.test {
             assertThat(awaitItem()).isEqualTo(
-                RewardListViewModel.Event.ShowUndoRewardSnackbar(
+                RewardListViewModel.RewardListEvent.ShowUndoRewardSnackbar(
                     reward1
                 )
             )

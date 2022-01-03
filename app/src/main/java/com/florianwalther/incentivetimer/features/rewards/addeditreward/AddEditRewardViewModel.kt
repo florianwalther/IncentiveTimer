@@ -4,7 +4,6 @@ import androidx.lifecycle.*
 import com.florianwalther.incentivetimer.data.Reward
 import com.florianwalther.incentivetimer.data.RewardDao
 import com.florianwalther.incentivetimer.core.ui.IconKey
-import com.florianwalther.incentivetimer.core.ui.defaultRewardIconKey
 import com.florianwalther.incentivetimer.core.ui.screenspecs.AddEditRewardScreenSpec
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -19,11 +18,11 @@ class AddEditRewardViewModel @Inject constructor(
 ) : ViewModel(), AddEditRewardScreenActions {
 
     private val rewardId = AddEditRewardScreenSpec.getRewardIdFromSavedStateHandle(savedStateHandle)
-    private val rewardLiveData = savedStateHandle.getLiveData<Reward>(
+    private val rewardInputLiveData = savedStateHandle.getLiveData<Reward>(
         KEY_REWARD_LIVE_DATA,
         Reward.DEFAULT
     )
-    val rewardInput: LiveData<Reward> = rewardLiveData
+    val rewardInput: LiveData<Reward> = rewardInputLiveData
 
     val isEditMode = AddEditRewardScreenSpec.isEditMode(rewardId)
 
@@ -31,30 +30,36 @@ class AddEditRewardViewModel @Inject constructor(
         savedStateHandle.getLiveData<Boolean>("unlockedStateCheckboxVisibleLiveData", false)
     val unlockedStateCheckboxVisible: LiveData<Boolean> = unlockedStateCheckboxVisibleLiveData
 
-    private val rewardNameInputIsErrorLiveData =
-        savedStateHandle.getLiveData<Boolean>("rewardNameInputIsError", false)
-    val rewardNameInputIsError: LiveData<Boolean> = rewardNameInputIsErrorLiveData
-
     private val showRewardIconSelectionDialogLiveData =
         savedStateHandle.getLiveData<Boolean>("showRewardIconSelectionDialogLiveData", false)
     val showRewardIconSelectionDialog: LiveData<Boolean> = showRewardIconSelectionDialogLiveData
 
     private val showDeleteRewardConfirmationDialogLiveData =
-        savedStateHandle.getLiveData<Boolean>("showDeleteRewardConfirmationDialogLiveData")
+        savedStateHandle.getLiveData<Boolean>("showDeleteRewardConfirmationDialogLiveData", false)
     val showDeleteRewardConfirmationDialog: LiveData<Boolean> =
         showDeleteRewardConfirmationDialogLiveData
 
+    private val rewardNameInputIsErrorLiveData =
+        savedStateHandle.getLiveData<Boolean>("rewardNameInputIsError", false)
+    val rewardNameInputIsError: LiveData<Boolean> = rewardNameInputIsErrorLiveData
+
     private val eventChannel = Channel<AddEditRewardEvent>()
-    val events = eventChannel.receiveAsFlow()
+    val events: Flow<AddEditRewardEvent> = eventChannel.receiveAsFlow()
+
+    sealed class AddEditRewardEvent {
+        object RewardCreated : AddEditRewardEvent()
+        object RewardUpdated : AddEditRewardEvent()
+        object RewardDeleted : AddEditRewardEvent()
+    }
 
     init {
         if (!savedStateHandle.contains("rewardLiveData")) {
             if (rewardId != null && isEditMode) {
                 viewModelScope.launch {
-                    rewardLiveData.value = rewardDao.getRewardById(rewardId).firstOrNull()
+                    rewardInputLiveData.value = rewardDao.getRewardById(rewardId).firstOrNull()
                 }
             } else {
-                rewardLiveData.value = Reward("", 10, defaultRewardIconKey)
+                rewardInputLiveData.value = Reward.DEFAULT
             }
         }
         if (rewardId != null) {
@@ -65,34 +70,28 @@ class AddEditRewardViewModel @Inject constructor(
                     .collectLatest { reward ->
                         if (reward != null) {
                             unlockedStateCheckboxVisibleLiveData.value = reward.isUnlocked
-                            rewardLiveData.value =
-                                rewardLiveData.value?.copy(isUnlocked = reward.isUnlocked)
+                            rewardInputLiveData.value =
+                                rewardInputLiveData.value?.copy(isUnlocked = reward.isUnlocked)
                         }
                     }
             }
         }
     }
 
-    sealed class AddEditRewardEvent {
-        object RewardCreated : AddEditRewardEvent()
-        object RewardUpdated : AddEditRewardEvent()
-        object RewardDeleted : AddEditRewardEvent()
-    }
-
     override fun onRewardNameInputChanged(input: String) {
-        rewardLiveData.value = rewardLiveData.value?.copy(name = input)
+        rewardInputLiveData.value = rewardInputLiveData.value?.copy(name = input)
     }
 
     override fun onChanceInPercentInputChanged(input: Int) {
-        rewardLiveData.value = rewardLiveData.value?.copy(chanceInPercent = input)
+        rewardInputLiveData.value = rewardInputLiveData.value?.copy(chanceInPercent = input)
+    }
+
+    override fun onRewardIconSelected(iconKey: IconKey) {
+        rewardInputLiveData.value = rewardInputLiveData.value?.copy(iconKey = iconKey)
     }
 
     override fun onRewardIconButtonClicked() {
         showRewardIconSelectionDialogLiveData.value = true
-    }
-
-    override fun onRewardIconSelected(iconKey: IconKey) {
-        rewardLiveData.value = rewardLiveData.value?.copy(iconKey = iconKey)
     }
 
     override fun onRewardIconDialogDismissed() {
@@ -100,7 +99,7 @@ class AddEditRewardViewModel @Inject constructor(
     }
 
     override fun onSaveClicked() {
-        val reward = rewardLiveData.value ?: return
+        val reward = rewardInputLiveData.value ?: return
         rewardNameInputIsErrorLiveData.value = false
 
         viewModelScope.launch {
@@ -127,7 +126,7 @@ class AddEditRewardViewModel @Inject constructor(
     }
 
     override fun onRewardUnlockedCheckedChanged(unlocked: Boolean) {
-        rewardLiveData.value = rewardLiveData.value?.copy(isUnlocked = unlocked)
+        rewardInputLiveData.value = rewardInputLiveData.value?.copy(isUnlocked = unlocked)
     }
 
     override fun onDeleteRewardClicked() {
@@ -137,7 +136,7 @@ class AddEditRewardViewModel @Inject constructor(
     override fun onDeleteRewardConfirmed() {
         showDeleteRewardConfirmationDialogLiveData.value = false
         viewModelScope.launch {
-            val reward = rewardLiveData.value
+            val reward = rewardInputLiveData.value
             if (reward != null) {
                 rewardDao.deleteReward(reward)
                 eventChannel.send(AddEditRewardEvent.RewardDeleted)

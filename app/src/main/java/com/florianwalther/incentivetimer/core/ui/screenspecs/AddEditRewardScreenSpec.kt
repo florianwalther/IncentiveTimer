@@ -30,7 +30,7 @@ object AddEditRewardScreenSpec : ScreenSpec {
             }
         )
 
-    fun isEditMode(rewardId: Long?) = rewardId != NO_REWARD_ID
+    fun isEditMode(rewardId: Long?) = rewardId != null && rewardId != NO_REWARD_ID
 
     fun buildRoute(rewardId: Long = NO_REWARD_ID) = "add_edit_reward?$ARG_REWARD_ID=$rewardId"
 
@@ -56,7 +56,8 @@ object AddEditRewardScreenSpec : ScreenSpec {
         val isEditMode = viewModel.isEditMode
 
         val rewardInput by viewModel.rewardInput.observeAsState(Reward.DEFAULT)
-        val unlockedStateCheckboxVisible by viewModel.unlockedStateCheckboxVisible.observeAsState(false)
+        val unlockedStateCheckboxVisible
+                by viewModel.unlockedStateCheckboxVisible.observeAsState(false)
         val rewardNameInputIsError by viewModel.rewardNameInputIsError.observeAsState(false)
         val showRewardIconSelectionDialog
                 by viewModel.showRewardIconSelectionDialog.observeAsState(false)
