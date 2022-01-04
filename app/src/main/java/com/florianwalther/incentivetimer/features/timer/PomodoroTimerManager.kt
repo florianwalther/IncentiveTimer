@@ -1,12 +1,14 @@
 package com.florianwalther.incentivetimer.features.timer
 
-import android.os.CountDownTimer
 import androidx.annotation.StringRes
 import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.core.notification.NotificationHelper
+import com.florianwalther.incentivetimer.di.ApplicationScope
 import com.florianwalther.incentivetimer.features.rewards.RewardUnlockManager
 import com.zhuinden.flowcombinetuplekt.combineTuple
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,7 +20,19 @@ data class PomodoroTimerState(
     val pomodorosCompletedInSet: Int,
     val pomodorosPerSetTarget: Int,
     val pomodorosCompletedTotal: Int,
-)
+) {
+    companion object {
+        val DEFAULT = PomodoroTimerState(
+            timerRunning = false,
+            currentPhase = PomodoroPhase.POMODORO,
+            timeLeftInMillis = POMODORO_DURATION_IN_MILLIS,
+            timeTargetInMillis = POMODORO_DURATION_IN_MILLIS,
+            pomodorosCompletedInSet = 0,
+            pomodorosPerSetTarget = POMODOROS_PER_SET,
+            pomodorosCompletedTotal = 0,
+        )
+    }
+}
 
 enum class PomodoroPhase(@StringRes val readableName: Int) {
     POMODORO(R.string.pomodoro), SHORT_BREAK(R.string.short_break), LONG_BREAK(R.string.long_break);
@@ -26,24 +40,30 @@ enum class PomodoroPhase(@StringRes val readableName: Int) {
     val isBreak get() = this == SHORT_BREAK || this == LONG_BREAK
 }
 
-const val POMODORO_DURATION_IN_MILLIS = /*25 * 60 * 1_000L*/ 60 * 60 * 1_000L
-const val SHORT_BREAK_DURATION_IN_MILLIS = /*5 * 60 * 1_000L*/ 5_000L
-const val LONG_BREAK_DURATION_IN_MILLIS = /*15 * 60 * 1_000L*/ 8_000L
+const val POMODORO_DURATION_IN_MILLIS = 25 * 60 * 1_000L
+const val SHORT_BREAK_DURATION_IN_MILLIS = 5 * 60 * 1_000L
+const val LONG_BREAK_DURATION_IN_MILLIS = 15 * 60 * 1_000L
 const val POMODOROS_PER_SET = 4
 
 @Singleton
 class PomodoroTimerManager @Inject constructor(
+    private val timer: CountDownTimer,
     private val timerServiceManager: TimerServiceManager,
     private val notificationHelper: NotificationHelper,
     private val rewardUnlockManager: RewardUnlockManager,
+    @ApplicationScope private val applicationScope: CoroutineScope,
 ) {
-    private val timerRunningFlow = MutableStateFlow(false)
-    private val currentPhaseFlow = MutableStateFlow(PomodoroPhase.POMODORO)
-    private val timeLeftInMillisFlow = MutableStateFlow(POMODORO_DURATION_IN_MILLIS)
-    private val timeTargetInMillisFlow = MutableStateFlow(POMODORO_DURATION_IN_MILLIS)
-    private val pomodorosCompletedInSetFlow = MutableStateFlow(0)
-    private val pomodorosPerSetTargetFlow = MutableStateFlow(POMODOROS_PER_SET)
-    private val pomodorosCompletedTotalFlow = MutableStateFlow(0)
+    private val timerRunningFlow = MutableStateFlow(PomodoroTimerState.DEFAULT.timerRunning)
+    private val currentPhaseFlow = MutableStateFlow(PomodoroTimerState.DEFAULT.currentPhase)
+    private val timeLeftInMillisFlow = MutableStateFlow(PomodoroTimerState.DEFAULT.timeLeftInMillis)
+    private val timeTargetInMillisFlow =
+        MutableStateFlow(PomodoroTimerState.DEFAULT.timeTargetInMillis)
+    private val pomodorosCompletedInSetFlow =
+        MutableStateFlow(PomodoroTimerState.DEFAULT.pomodorosCompletedInSet)
+    private val pomodorosPerSetTargetFlow =
+        MutableStateFlow(PomodoroTimerState.DEFAULT.pomodorosPerSetTarget)
+    private val pomodorosCompletedTotalFlow =
+        MutableStateFlow(PomodoroTimerState.DEFAULT.pomodorosCompletedTotal)
 
     val pomodoroTimerState = combineTuple(
         timerRunningFlow,
@@ -65,7 +85,9 @@ class PomodoroTimerManager @Inject constructor(
         )
     }
 
-    private var countDownTimer: CountDownTimer? = null
+    init {
+        observeTimerEvents()
+    }
 
     fun startStopTimer() {
         notificationHelper.removeTimerCompletedNotification()
@@ -82,12 +104,24 @@ class PomodoroTimerManager @Inject constructor(
         resetPomodoroCounterIfTargetReached()
 
         val timeLeftInMillis = timeLeftInMillisFlow.value
-        countDownTimer = object : CountDownTimer(timeLeftInMillis, 1000L) {
-            override fun onTick(millisUntilFinished: Long) {
-                timeLeftInMillisFlow.value = millisUntilFinished
-            }
 
-            override fun onFinish() {
+        timer.startTimer(
+            millisInFuture = timeLeftInMillis,
+            countDownInterval = 1000L,
+        )
+
+        timerServiceManager.startTimerService()
+        timerRunningFlow.value = true
+    }
+
+    private fun observeTimerEvents() {
+        applicationScope.launch {
+            timer.tickEvent.collect { millisUntilFinished ->
+                timeLeftInMillisFlow.value = millisUntilFinished.value
+            }
+        }
+        applicationScope.launch {
+            timer.finishEvent.collect {
                 val currentPhase = currentPhaseFlow.value
                 notificationHelper.showTimerCompletedNotification(currentPhase)
                 if (currentPhase == PomodoroPhase.POMODORO) {
@@ -98,21 +132,18 @@ class PomodoroTimerManager @Inject constructor(
                 startNextPhase()
                 startTimer()
             }
-
-        }.start()
-        timerServiceManager.startTimerService()
-        timerRunningFlow.value = true
+        }
     }
 
     private fun stopTimer() {
-        countDownTimer?.cancel()
+        timer.cancelTimer()
         timerServiceManager.stopTimerService()
         timerRunningFlow.value = false
     }
 
     fun skipBreak() {
         if (currentPhaseFlow.value.isBreak) {
-            countDownTimer?.cancel()
+            timer.cancelTimer()
             startNextPhase()
             if (timerRunningFlow.value) {
                 startTimer()
@@ -177,3 +208,6 @@ class PomodoroTimerManager @Inject constructor(
 
     // TODO: 26/12/2021 Save instance state in Activity.onSaveInstanceState
 }
+
+@JvmInline
+value class MillisUntilFinished(val value: Long)
