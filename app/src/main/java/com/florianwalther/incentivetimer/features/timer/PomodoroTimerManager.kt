@@ -8,7 +8,6 @@ import com.florianwalther.incentivetimer.features.rewards.RewardUnlockManager
 import com.zhuinden.flowcombinetuplekt.combineTuple
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -85,10 +84,6 @@ class PomodoroTimerManager @Inject constructor(
         )
     }
 
-    init {
-        observeTimerEvents()
-    }
-
     fun startStopTimer() {
         notificationHelper.removeTimerCompletedNotification()
         val timerRunning = timerRunningFlow.value
@@ -106,22 +101,12 @@ class PomodoroTimerManager @Inject constructor(
         val timeLeftInMillis = timeLeftInMillisFlow.value
 
         timer.startTimer(
-            millisInFuture = timeLeftInMillis,
-            countDownInterval = 1000L,
-        )
-
-        timerServiceManager.startTimerService()
-        timerRunningFlow.value = true
-    }
-
-    private fun observeTimerEvents() {
-        applicationScope.launch {
-            timer.tickEvent.collect { millisUntilFinished ->
-                timeLeftInMillisFlow.value = millisUntilFinished.value
-            }
-        }
-        applicationScope.launch {
-            timer.finishEvent.collect {
+            durationMillis = timeLeftInMillis,
+            countDownInterval = 0L,
+            onTick = { millisUntilFinished ->
+                timeLeftInMillisFlow.value = millisUntilFinished
+            },
+            onFinish = {
                 val currentPhase = currentPhaseFlow.value
                 notificationHelper.showTimerCompletedNotification(currentPhase)
                 if (currentPhase == PomodoroPhase.POMODORO) {
@@ -131,8 +116,11 @@ class PomodoroTimerManager @Inject constructor(
                 }
                 startNextPhase()
                 startTimer()
-            }
-        }
+            },
+        )
+
+        timerServiceManager.startTimerService()
+        timerRunningFlow.value = true
     }
 
     private fun stopTimer() {
@@ -208,6 +196,3 @@ class PomodoroTimerManager @Inject constructor(
 
     // TODO: 26/12/2021 Save instance state in Activity.onSaveInstanceState
 }
-
-@JvmInline
-value class MillisUntilFinished(val value: Long)

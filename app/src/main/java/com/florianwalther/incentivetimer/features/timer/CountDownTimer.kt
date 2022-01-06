@@ -19,33 +19,26 @@ class CountDownTimer @Inject constructor(
 
     private var timerJob: Job? = null
 
-    private val tickEventChannel = Channel<MillisUntilFinished>()
-    val tickEvent = tickEventChannel.receiveAsFlow()
-
-    private val finishEventChannel = Channel<Unit>()
-    val finishEvent = finishEventChannel.receiveAsFlow()
-
     fun startTimer(
-        millisInFuture: Long,
+        durationMillis: Long,
         countDownInterval: Long,
+        onTick: (millisUntilFinished: Long) -> Unit,
+        onFinish: () -> Unit,
     ) {
-        millisUntilFinished = millisInFuture
+        millisUntilFinished = durationMillis
+        val startTime = timeSource.elapsedRealTime
+        val targetTime = startTime + durationMillis
         timerJob = scope.launch {
-            val startTime = timeSource.elapsedRealTime
-            val targetTime = startTime + millisInFuture
             while (true) {
-                println("elapsedRealTime = ${timeSource.elapsedRealTime}")
                 if (timeSource.elapsedRealTime < targetTime) {
-                    println("if")
-                    delay(countDownInterval)
-                    println("targetTime = $targetTime")
                     println("elapsedRealTime = ${timeSource.elapsedRealTime}")
+                    delay(countDownInterval)
                     millisUntilFinished = targetTime - timeSource.elapsedRealTime
-                    println("millisUntilFinished = $millisUntilFinished")
-                    tickEventChannel.send(MillisUntilFinished(millisUntilFinished))
+                    onTick(millisUntilFinished)
                 } else {
-                    println("else")
-                    finishEventChannel.send(Unit)
+                    println("onFinish")
+                    onFinish()
+                    break
                 }
             }
         }
