@@ -102,7 +102,7 @@ class PomodoroTimerManager @Inject constructor(
 
         timer.startTimer(
             durationMillis = timeLeftInMillis,
-            countDownInterval = 0L,
+            countDownInterval = 1000L,
             onTick = { millisUntilFinished ->
                 timeLeftInMillisFlow.value = millisUntilFinished
             },

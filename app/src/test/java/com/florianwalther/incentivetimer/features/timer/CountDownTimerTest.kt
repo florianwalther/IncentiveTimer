@@ -86,6 +86,23 @@ class CountDownTimerTest {
         }
     }
 
+    @Test
+    fun startTimer_countDownIntervalGreaterThanDuration_callsOnFinishAfterDuration() = testScope.runTest {
+        var onFinishCount = 0
+
+        countDownTimer.startTimer(
+            durationMillis = 10_000,
+            countDownInterval = 20_000,
+            onTick = {},
+            onFinish = { onFinishCount++ }
+        )
+
+        advanceTimeBy(10_000)
+        fakeTimeSource.advanceTimeBy(10_000)
+        runCurrent()
+        assertThat(onFinishCount).isEqualTo( 1)
+    }
+
     // TODO: 06/01/2022 Ask Gabor about this test because I don't see anything we could change
     /*@Test
     fun startTimer_overDuration_returnsCorrectTickCount() = testScope.runTest {

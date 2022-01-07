@@ -32,7 +32,7 @@ class CountDownTimer @Inject constructor(
             while (true) {
                 if (timeSource.elapsedRealTime < targetTime) {
                     println("elapsedRealTime = ${timeSource.elapsedRealTime}")
-                    delay(countDownInterval)
+                    delay(minOf(countDownInterval, durationMillis))
                     millisUntilFinished = targetTime - timeSource.elapsedRealTime
                     onTick(millisUntilFinished)
                 } else {

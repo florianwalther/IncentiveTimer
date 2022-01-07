@@ -115,28 +115,36 @@ class TimerViewModelTest {
         viewModel.onStartStopTimerClicked()
 
         assertThat(viewModel.pomodoroTimerState.getOrAwaitValue().timerRunning).isFalse()
-
     }
 
     @Test
     fun onStartStopTimerClicked_timerNotRunningAndPomodoroTargetReached_resetsPomodoroCounter() =
         testScope.runTest {
-            // TODO: 04/01/2022 Finish this test
-            /*viewModel.onStartStopTimerClicked()
-            repeat(3) {
-                testScope.advanceTimeBy(25 * 60)
-                testScope.advanceTimeBy(5 * 60)
-            }
-            testScope.advanceTimeBy(25 * 60)
-            testScope.advanceTimeBy(15 * 60)
+            // TODO: 06/01/2022 This test works but needs to long to run because the loop pretends
+            //  that the timer is running for the whole ~2h. Solution: Create a settings class and
+            //  inject it into the ViewModel with smaller fake values
+            viewModel.onStartStopTimerClicked()
 
-            testScope.advanceTimeBy(1_000)
+            repeat(3) {
+               advanceTimeBy(25 * 60 * 1000L)
+               fakeTimeSource.advanceTimeBy(25 * 60 * 1000L)
+                runCurrent()
+                advanceTimeBy(5 * 60 * 1000L)
+                fakeTimeSource.advanceTimeBy(5 * 60 * 1000L)
+                runCurrent()
+            }
+            testScope.advanceTimeBy(25 * 60 * 1000L)
+            fakeTimeSource.advanceTimeBy(25 * 60 * 1000L)
+            runCurrent()
+            testScope.advanceTimeBy(15 * 60 * 1000L)
+            fakeTimeSource.advanceTimeBy(15 * 60 * 1000L)
+            runCurrent()
 
             viewModel.onStartStopTimerClicked()
 
             assertThat(viewModel.pomodoroTimerState.getOrAwaitValue().pomodorosCompletedInSet).isEqualTo(
                 0
-            )*/
+            )
         }
 
     companion object {
