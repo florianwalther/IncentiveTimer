@@ -130,6 +130,9 @@ dependencies {
 
     // Turbine
     testImplementation 'app.cash.turbine:turbine:0.7.0'
+
+    // MockK
+    testImplementation "io.mockk:mockk:1.12.2"
 }
 
 kapt {

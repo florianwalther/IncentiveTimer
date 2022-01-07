@@ -4,6 +4,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.florianwalther.incentivetimer.core.ui.IconKey
+import com.florianwalther.incentivetimer.core.ui.defaultRewardIconKey
 import com.florianwalther.incentivetimer.data.FakeRewardDao
 import com.florianwalther.incentivetimer.data.Reward
 import com.florianwalther.incentivetimer.getOrAwaitValue
@@ -43,8 +44,10 @@ class AddEditRewardViewModelTestWithoutRewardId {
     }
 
     @Test
-    fun rewardInput_hasDefaultValues() {
-        assertThat(viewModel.rewardInput.getOrAwaitValue()).isEqualTo(Reward.DEFAULT)
+    fun rewardInput_hasCorrectDefaultValues() {
+        assertThat(viewModel.rewardInput.getOrAwaitValue()).isEqualTo(
+            defaultReward
+        )
     }
 
     @Test
@@ -149,7 +152,7 @@ class AddEditRewardViewModelTestWithoutRewardId {
         val rewards = fakeRewardDao.getAllRewardsSortedByIsUnlockedDesc().first()
 
         val expectedReward =
-            Reward.DEFAULT.copy(
+           defaultReward.copy(
                 name = nameInput,
                 chanceInPercent = chanceInPercentInput,
                 iconKey = iconKeyInput,
@@ -176,5 +179,15 @@ class AddEditRewardViewModelTestWithoutRewardId {
         viewModel.events.test {
             assertThat(awaitItem()).isEqualTo(AddEditRewardViewModel.AddEditRewardEvent.RewardCreated)
         }
+    }
+
+    companion object {
+        private val defaultReward = Reward(
+            name = "",
+            chanceInPercent = 10,
+            iconKey = defaultRewardIconKey,
+            isUnlocked = false,
+            id = 0,
+        )
     }
 }

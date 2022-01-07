@@ -13,9 +13,8 @@ class FakeRewardDao(
     override fun getAllRewardsSortedByIsUnlockedDesc(): Flow<List<Reward>> =
         rewards.map { it.values.sortedByDescending { it.isUnlocked }.toList() }
 
-    override fun getAllNotUnlockedRewards(): Flow<List<Reward>> {
-        TODO("Not yet implemented")
-    }
+    override fun getAllNotUnlockedRewards(): Flow<List<Reward>> =
+        rewards.map { it.values.filter { !it.isUnlocked } }
 
     override fun getRewardById(rewardId: Long): Flow<Reward?> =
         rewards.map { rewardMap ->
