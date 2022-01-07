@@ -1,18 +1,27 @@
 package com.florianwalther.incentivetimer.core.ui.screenspecs
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavDeepLink
 import androidx.navigation.navDeepLink
+import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.features.timer.TimerScreenContent
 import com.florianwalther.incentivetimer.features.timer.TimerScreenAppBar
 import com.florianwalther.incentivetimer.features.timer.TimerViewModel
 
-object TimerScreenSpec : ScreenSpec {
+object TimerScreenSpec : BottomNavScreenSpec {
+
+    override val icon: ImageVector = Icons.Outlined.Timer
+
+    override val label: Int = R.string.timer
+
     override val navHostRoute: String = "timer"
 
     override val deepLinks: List<NavDeepLink> = listOf(

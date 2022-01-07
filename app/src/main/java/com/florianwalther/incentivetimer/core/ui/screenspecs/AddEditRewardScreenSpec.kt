@@ -18,6 +18,10 @@ import com.florianwalther.incentivetimer.features.rewards.addeditreward.*
 import kotlinx.coroutines.flow.collect
 
 object AddEditRewardScreenSpec : ScreenSpec {
+
+    private const val ARG_REWARD_ID = "rewardId"
+    private const val NO_REWARD_ID = -1L
+
     override val navHostRoute: String = "add_edit_reward?$ARG_REWARD_ID={$ARG_REWARD_ID}"
 
     override val arguments: List<NamedNavArgument>
@@ -101,6 +105,3 @@ object AddEditRewardScreenSpec : ScreenSpec {
         )
     }
 }
-
-private const val ARG_REWARD_ID = "rewardId"
-const val NO_REWARD_ID = -1L

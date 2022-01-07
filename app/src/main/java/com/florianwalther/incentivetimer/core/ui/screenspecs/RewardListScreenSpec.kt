@@ -1,11 +1,14 @@
 package com.florianwalther.incentivetimer.core.ui.screenspecs
 
 import androidx.compose.material.SnackbarResult
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
@@ -23,7 +26,12 @@ import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListS
 import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListViewModel
 import kotlinx.coroutines.flow.collectLatest
 
-object RewardListScreenSpec : ScreenSpec {
+object RewardListScreenSpec : BottomNavScreenSpec {
+
+    override val icon: ImageVector = Icons.Outlined.Star
+
+    override val label: Int = R.string.rewards
+
     override val navHostRoute: String = "reward_list"
 
     override val deepLinks: List<NavDeepLink> = listOf(
