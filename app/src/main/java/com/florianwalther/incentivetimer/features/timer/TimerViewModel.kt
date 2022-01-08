@@ -1,10 +1,10 @@
 package com.florianwalther.incentivetimer.features.timer
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
+import androidx.lifecycle.*
+import com.florianwalther.incentivetimer.features.timer.model.TimerScreenState
+import com.zhuinden.flowcombinetuplekt.combineTuple
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 @HiltViewModel
@@ -15,84 +15,96 @@ class TimerViewModel @Inject constructor(
 
     val pomodoroTimerState = pomodoroTimerManager.pomodoroTimerState.asLiveData()
 
-    private val showResetTimerConfirmationDialogLiveData =
-        savedStateHandle.getLiveData<Boolean>("showResetTimerConfirmationDialogLiveData", false)
-    val showResetTimerConfirmationDialog: LiveData<Boolean> =
-        showResetTimerConfirmationDialogLiveData
+    private val showResetTimerConfirmationDialog =
+        savedStateHandle.getLiveData<Boolean>("showResetTimerConfirmationDialog", false)
 
-    private val showSkipBreakConfirmationDialogLivedata =
-        savedStateHandle.getLiveData<Boolean>("showSkipBreakConfirmationDialogLivedata", false)
-    val showSkipBreakConfirmationDialog: LiveData<Boolean> = showSkipBreakConfirmationDialogLivedata
+    private val showSkipBreakConfirmationDialog =
+        savedStateHandle.getLiveData<Boolean>("showSkipBreakConfirmationDialog", false)
 
-    private val showResetPomodoroSetConfirmationDialogLiveData =
+    private val showResetPomodoroSetConfirmationDialog =
         savedStateHandle.getLiveData<Boolean>(
-            "showResetPomodoroSetConfirmationDialogLiveData",
+            "showResetPomodoroSetConfirmationDialog",
             false
         )
-    val showResetPomodoroSetConfirmationDialog: LiveData<Boolean> =
-        showResetPomodoroSetConfirmationDialogLiveData
 
-    private val showResetPomodoroCountConfirmationDialogLiveData =
+    private val showResetPomodoroCountConfirmationDialog =
         savedStateHandle.getLiveData<Boolean>(
-            "showResetPomodoroCountConfirmationDialogLiveData",
+            "showResetPomodoroCountConfirmationDialog",
             false
         )
-    val showResetPomodoroCountConfirmationDialog: LiveData<Boolean> =
-        showResetPomodoroCountConfirmationDialogLiveData
+
+    val screenState = combineTuple(
+        showResetTimerConfirmationDialog.asFlow(),
+        showSkipBreakConfirmationDialog.asFlow(),
+        showResetPomodoroSetConfirmationDialog.asFlow(),
+        showResetPomodoroCountConfirmationDialog.asFlow(),
+    ).map { (
+                showResetTimerConfirmationDialogLiveData,
+                showSkipBreakConfirmationDialogLivedata,
+                showResetPomodoroSetConfirmationDialogLiveData,
+                showResetPomodoroCountConfirmationDialogLiveData
+            ) ->
+        TimerScreenState(
+            showResetTimerConfirmationDialog = showResetTimerConfirmationDialogLiveData,
+            showSkipBreakConfirmationDialog = showSkipBreakConfirmationDialogLivedata,
+            showResetPomodoroSetConfirmationDialog = showResetPomodoroSetConfirmationDialogLiveData,
+            showResetPomodoroCountConfirmationDialog = showResetPomodoroCountConfirmationDialogLiveData,
+        )
+    }.asLiveData()
 
     override fun onStartStopTimerClicked() {
         pomodoroTimerManager.startStopTimer()
     }
 
     override fun onResetTimerClicked() {
-        showResetTimerConfirmationDialogLiveData.value = true
+        showResetTimerConfirmationDialog.value = true
     }
 
     override fun onResetTimerConfirmed() {
-        showResetTimerConfirmationDialogLiveData.value = false
+        showResetTimerConfirmationDialog.value = false
         pomodoroTimerManager.resetTimer()
     }
 
     override fun onResetTimerDialogDismissed() {
-        showResetTimerConfirmationDialogLiveData.value = false
+        showResetTimerConfirmationDialog.value = false
     }
 
     override fun onSkipBreakClicked() {
-        showSkipBreakConfirmationDialogLivedata.value = true
+        showSkipBreakConfirmationDialog.value = true
     }
 
     override fun onSkipBreakConfirmed() {
-        showSkipBreakConfirmationDialogLivedata.value = false
+        showSkipBreakConfirmationDialog.value = false
         pomodoroTimerManager.skipBreak()
     }
 
     override fun onSkipBreakDialogDismissed() {
-        showSkipBreakConfirmationDialogLivedata.value = false
+        showSkipBreakConfirmationDialog.value = false
     }
 
     override fun onResetPomodoroSetClicked() {
-        showResetPomodoroSetConfirmationDialogLiveData.value = true
+        showResetPomodoroSetConfirmationDialog.value = true
     }
 
     override fun onResetPomodoroSetConfirmed() {
-        showResetPomodoroSetConfirmationDialogLiveData.value = false
+        showResetPomodoroSetConfirmationDialog.value = false
         pomodoroTimerManager.resetPomodoroSet()
     }
 
     override fun onResetPomodoroSetDialogDismissed() {
-        showResetPomodoroSetConfirmationDialogLiveData.value = false
+        showResetPomodoroSetConfirmationDialog.value = false
     }
 
     override fun onResetPomodoroCountClicked() {
-        showResetPomodoroCountConfirmationDialogLiveData.value = true
+        showResetPomodoroCountConfirmationDialog.value = true
     }
 
     override fun onResetPomodoroCountConfirmed() {
-        showResetPomodoroCountConfirmationDialogLiveData.value = false
+        showResetPomodoroCountConfirmationDialog.value = false
         pomodoroTimerManager.resetPomodoroCount()
     }
 
     override fun onResetPomodoroCountDialogDismissed() {
-        showResetPomodoroCountConfirmationDialogLiveData.value = false
+        showResetPomodoroCountConfirmationDialog.value = false
     }
 }

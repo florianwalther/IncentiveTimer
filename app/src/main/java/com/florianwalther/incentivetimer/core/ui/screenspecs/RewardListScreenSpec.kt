@@ -1,11 +1,14 @@
 package com.florianwalther.incentivetimer.core.ui.screenspecs
 
 import androidx.compose.material.SnackbarResult
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
@@ -21,9 +24,10 @@ import com.florianwalther.incentivetimer.features.rewards.addeditreward.RESULT_R
 import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListScreenAppBar
 import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListScreenContent
 import com.florianwalther.incentivetimer.features.rewards.rewardlist.RewardListViewModel
+import com.florianwalther.incentivetimer.features.rewards.rewardlist.model.RewardListScreenState
 import kotlinx.coroutines.flow.collectLatest
 
-object RewardListScreenSpec : ScreenSpec {
+object RewardListScreenSpec : BottomNavScreenSpec {
     override val navHostRoute: String = "reward_list"
 
     override val deepLinks: List<NavDeepLink> = listOf(
@@ -32,15 +36,17 @@ object RewardListScreenSpec : ScreenSpec {
         }
     )
 
+    override val icon: ImageVector = Icons.Outlined.Star
+
+    override val label: Int = R.string.rewards
+
     @Composable
     override fun TopBar(navController: NavController, navBackStackEntry: NavBackStackEntry) {
         val viewModel: RewardListViewModel = hiltViewModel(navBackStackEntry)
-        val multiSelectionModeActive by viewModel.multiSelectionModeActive.observeAsState(false)
-        val selectedItemCount by viewModel.selectedItemCount.observeAsState(0)
+        val screenState by viewModel.screenState.observeAsState(RewardListScreenState.initialState)
 
         RewardListScreenAppBar(
-            multiSelectionModeActive = multiSelectionModeActive,
-            selectedItemCount = selectedItemCount,
+            screenState = screenState,
             actions = viewModel,
         )
     }
@@ -48,12 +54,7 @@ object RewardListScreenSpec : ScreenSpec {
     @Composable
     override fun Content(navController: NavController, navBackStackEntry: NavBackStackEntry) {
         val viewModel: RewardListViewModel = hiltViewModel(navBackStackEntry)
-        val rewards by viewModel.rewards.observeAsState(listOf())
-        val selectedRewards by viewModel.selectedRewards.observeAsState(listOf())
-        val showDeleteAllUnlockedRewardsDialog
-                by viewModel.showDeleteAllUnlockedRewardsDialog.observeAsState(false)
-        val showDeleteAllSelectedRewardsDialog
-                by viewModel.showDeleteAllSelectedRewardsDialog.observeAsState(false)
+        val screenState by viewModel.screenState.observeAsState(RewardListScreenState.initialState)
 
         val scaffoldState = rememberScaffoldState()
 
@@ -102,10 +103,7 @@ object RewardListScreenSpec : ScreenSpec {
         }
 
         RewardListScreenContent(
-            rewards = rewards,
-            showDeleteAllUnlockedRewardsDialog = showDeleteAllUnlockedRewardsDialog,
-            showDeleteAllSelectedRewardsDialog = showDeleteAllSelectedRewardsDialog,
-            selectedRewards = selectedRewards,
+            screenState = screenState,
             onAddNewRewardClicked = {
                 navController.navigate(AddEditRewardScreenSpec.buildRoute())
             },

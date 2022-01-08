@@ -26,6 +26,7 @@ import com.florianwalther.incentivetimer.core.ui.composables.SimpleConfirmationD
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
 import com.florianwalther.incentivetimer.core.ui.theme.PrimaryLightAlpha
 import com.florianwalther.incentivetimer.core.util.formatMillisecondsToTimeString
+import com.florianwalther.incentivetimer.features.timer.model.TimerScreenState
 
 @Composable
 fun TimerScreenAppBar(
@@ -83,29 +84,24 @@ fun TimerScreenAppBar(
 @Composable
 fun TimerScreenContent(
     pomodoroTimerState: PomodoroTimerState?,
-    showResetTimerConfirmationDialog: Boolean,
-    showSkipBreakConfirmationDialog: Boolean,
-    showResetPomodoroSetConfirmationDialog: Boolean,
-    showResetPomodoroCountConfirmationDialog: Boolean,
+    screenState: TimerScreenState,
     actions: TimerScreenActions,
 ) {
     val timerRunning = pomodoroTimerState?.timerRunning ?: false
-    Scaffold {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Timer(pomodoroTimerState)
-            Spacer(Modifier.height(48.dp))
-            TimerStartStopButton(
-                timerRunning = timerRunning,
-                actions = actions
-            )
-        }
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Timer(pomodoroTimerState)
+        Spacer(Modifier.height(48.dp))
+        TimerStartStopButton(
+            timerRunning = timerRunning,
+            actions = actions
+        )
     }
 
-    if (showResetTimerConfirmationDialog) {
+    if (screenState.showResetTimerConfirmationDialog) {
         SimpleConfirmationDialog(
             text = R.string.reset_timer_confirmation_message,
             title = R.string.reset_timer,
@@ -115,7 +111,7 @@ fun TimerScreenContent(
         )
     }
 
-    if (showSkipBreakConfirmationDialog) {
+    if (screenState.showSkipBreakConfirmationDialog) {
         SimpleConfirmationDialog(
             text = R.string.skip_break_confirmation_message,
             title = R.string.skip_break,
@@ -125,7 +121,7 @@ fun TimerScreenContent(
         )
     }
 
-    if (showResetPomodoroSetConfirmationDialog) {
+    if (screenState.showResetPomodoroSetConfirmationDialog) {
         SimpleConfirmationDialog(
             text = R.string.reset_pomodoro_set_confirmation_message,
             title = R.string.reset_pomodoro_set,
@@ -135,7 +131,7 @@ fun TimerScreenContent(
         )
     }
 
-    if (showResetPomodoroCountConfirmationDialog) {
+    if (screenState.showResetPomodoroCountConfirmationDialog) {
         SimpleConfirmationDialog(
             text = R.string.reset_pomodoro_count_confirmation_message,
             title = R.string.reset_pomodoro_count,
@@ -318,10 +314,7 @@ private fun ScreenContentPreview() {
                     override fun onResetPomodoroCountConfirmed() {}
                     override fun onResetPomodoroCountDialogDismissed() {}
                 },
-                showResetTimerConfirmationDialog = false,
-                showSkipBreakConfirmationDialog = false,
-                showResetPomodoroSetConfirmationDialog = false,
-                showResetPomodoroCountConfirmationDialog = false,
+                screenState = TimerScreenState.initialState,
             )
         }
     }

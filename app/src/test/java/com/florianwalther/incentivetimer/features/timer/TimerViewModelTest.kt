@@ -70,22 +70,22 @@ class TimerViewModelTest {
 
     @Test
     fun showResetTimerConfirmationDialog_defaultValueFalse() {
-        assertThat(viewModel.showResetTimerConfirmationDialog.getOrAwaitValue()).isFalse()
+        assertThat(viewModel.screenState.getOrAwaitValue().showResetTimerConfirmationDialog).isFalse()
     }
 
     @Test
     fun showSkipBreakConfirmationDialog_defaultValueFalse() {
-        assertThat(viewModel.showSkipBreakConfirmationDialog.getOrAwaitValue()).isFalse()
+        assertThat(viewModel.screenState.getOrAwaitValue().showSkipBreakConfirmationDialog).isFalse()
     }
 
     @Test
     fun showResetPomodoroSetConfirmationDialog_defaultValueFalse() {
-        assertThat(viewModel.showResetPomodoroSetConfirmationDialog.getOrAwaitValue()).isFalse()
+        assertThat(viewModel.screenState.getOrAwaitValue().showResetPomodoroSetConfirmationDialog).isFalse()
     }
 
     @Test
     fun showResetPomodoroCountConfirmationDialog_defaultValueFalse() {
-        assertThat(viewModel.showResetPomodoroCountConfirmationDialog.getOrAwaitValue()).isFalse()
+        assertThat(viewModel.screenState.getOrAwaitValue().showResetPomodoroCountConfirmationDialog).isFalse()
     }
 
     @Test
@@ -120,9 +120,6 @@ class TimerViewModelTest {
     @Test
     fun onStartStopTimerClicked_timerNotRunningAndPomodoroTargetReached_resetsPomodoroCounter() =
         testScope.runTest {
-            // TODO: 06/01/2022 This test works but needs to long to run because the loop pretends
-            //  that the timer is running for the whole ~2h. Solution: Create a settings class and
-            //  inject it into the ViewModel with smaller fake values
             viewModel.onStartStopTimerClicked()
 
             repeat(3) {

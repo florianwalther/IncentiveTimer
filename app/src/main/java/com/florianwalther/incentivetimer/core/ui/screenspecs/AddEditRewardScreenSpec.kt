@@ -11,10 +11,9 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.navArgument
 import com.florianwalther.incentivetimer.application.ARG_HIDE_BOTTOM_BAR
-import com.florianwalther.incentivetimer.core.ui.defaultRewardIconKey
 import com.florianwalther.incentivetimer.core.util.exhaustive
-import com.florianwalther.incentivetimer.data.Reward
 import com.florianwalther.incentivetimer.features.rewards.addeditreward.*
+import com.florianwalther.incentivetimer.features.rewards.addeditreward.model.AddEditRewardScreenState
 import kotlinx.coroutines.flow.collect
 
 object AddEditRewardScreenSpec : ScreenSpec {
@@ -40,9 +39,10 @@ object AddEditRewardScreenSpec : ScreenSpec {
     @Composable
     override fun TopBar(navController: NavController, navBackStackEntry: NavBackStackEntry) {
         val viewModel: AddEditRewardViewModel = hiltViewModel(navBackStackEntry)
-        val rewardId = navBackStackEntry.arguments?.getLong(ARG_REWARD_ID)
+        val isEditMode = viewModel.isEditMode
+
         AddEditRewardScreenAppBar(
-            isEditMode = isEditMode(rewardId),
+            isEditMode = isEditMode,
             onCloseClicked = {
                 navController.popBackStack()
             },
@@ -53,17 +53,8 @@ object AddEditRewardScreenSpec : ScreenSpec {
     @Composable
     override fun Content(navController: NavController, navBackStackEntry: NavBackStackEntry) {
         val viewModel: AddEditRewardViewModel = hiltViewModel()
+        val screenState by viewModel.screenState.observeAsState(AddEditRewardScreenState.initialState)
         val isEditMode = viewModel.isEditMode
-
-        val rewardInput by viewModel.rewardInput.observeAsState(Reward.DEFAULT)
-        val unlockedStateCheckboxVisible
-                by viewModel.unlockedStateCheckboxVisible.observeAsState(false)
-        val rewardNameInputIsError by viewModel.rewardNameInputIsError.observeAsState(false)
-        val showRewardIconSelectionDialog
-                by viewModel.showRewardIconSelectionDialog.observeAsState(false)
-        val showDeleteRewardConfirmationDialog
-                by viewModel.showDeleteRewardConfirmationDialog.observeAsState(false)
-
 
         LaunchedEffect(Unit) {
             viewModel.events.collect { event ->
@@ -91,16 +82,12 @@ object AddEditRewardScreenSpec : ScreenSpec {
         }
 
         AddEditRewardScreenContent(
+            screenState = screenState,
             isEditMode = isEditMode,
-            rewardInput = rewardInput,
-            unlockedStateCheckboxVisible = unlockedStateCheckboxVisible,
-            rewardNameInputIsError = rewardNameInputIsError,
-            showRewardIconSelectionDialog = showRewardIconSelectionDialog,
-            showDeleteRewardConfirmationDialog = showDeleteRewardConfirmationDialog,
             actions = viewModel,
         )
     }
 }
 
 private const val ARG_REWARD_ID = "rewardId"
-const val NO_REWARD_ID = -1L
+private const val NO_REWARD_ID = -1L

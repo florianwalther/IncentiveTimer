@@ -1,5 +1,7 @@
 package com.florianwalther.incentivetimer.data
 
+import com.florianwalther.incentivetimer.data.db.Reward
+import com.florianwalther.incentivetimer.data.db.RewardDao
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -31,7 +33,7 @@ class FakeRewardDao(
         }
 
         updateRewardMap {
-            this[reward.id] = rewardWithId
+            this[rewardWithId.id] = rewardWithId
         }
     }
 

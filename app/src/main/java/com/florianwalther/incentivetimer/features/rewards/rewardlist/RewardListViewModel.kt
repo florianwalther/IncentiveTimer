@@ -1,14 +1,13 @@
 package com.florianwalther.incentivetimer.features.rewards.rewardlist
 
 import androidx.lifecycle.*
-import com.florianwalther.incentivetimer.data.Reward
-import com.florianwalther.incentivetimer.data.RewardDao
+import com.florianwalther.incentivetimer.data.db.Reward
+import com.florianwalther.incentivetimer.data.db.RewardDao
+import com.florianwalther.incentivetimer.features.rewards.rewardlist.model.RewardListScreenState
+import com.zhuinden.flowcombinetuplekt.combineTuple
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -18,38 +17,46 @@ class RewardListViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
 ) : ViewModel(), RewardListActions {
 
-    private val rewardsFlow = rewardDao.getAllRewardsSortedByIsUnlockedDesc()
-    val rewards = rewardsFlow.asLiveData()
+    private val rewards = rewardDao.getAllRewardsSortedByIsUnlockedDesc()
 
-    private val selectedRewardsLiveData =
-        savedStateHandle.getLiveData<List<Reward>>("selectedRewardsLiveData", listOf())
+    private val selectedRewardIds =
+        savedStateHandle.getLiveData<List<Long>>("selectedRewardIds", emptyList())
 
-    val selectedRewards: LiveData<List<Reward>> = combine(
-        selectedRewardsLiveData.asFlow(),
-        rewardsFlow
-    ) { selectedRewards, rewards ->
-        selectedRewards.filter { rewards.contains(it) }
-    }.onEach { selectedRewards ->
-        if (selectedRewards.isEmpty()) {
-            cancelMultiSelectionMode()
-        }
-    }.asLiveData()
+    private val selectedItemCount = selectedRewardIds.map { it.size }
 
-    val selectedItemCount = selectedRewards.map { it.size }
-
-    private val multiSelectionModeActiveLiveData =
+    private val multiSelectionModeActive =
         savedStateHandle.getLiveData<Boolean>("multiSelectionModeActiveLiveData", false)
-    val multiSelectionModeActive: LiveData<Boolean> = multiSelectionModeActiveLiveData
 
-    private val showDeleteAllSelectedRewardsDialogLiveData =
-        savedStateHandle.getLiveData<Boolean>("showDeleteAllSelectedRewardsDialogLiveData", false)
-    val showDeleteAllSelectedRewardsDialog: LiveData<Boolean> =
-        showDeleteAllSelectedRewardsDialogLiveData
+    private val showDeleteAllSelectedRewardsDialog =
+        savedStateHandle.getLiveData<Boolean>("showDeleteAllSelectedRewardsDialog", false)
 
-    private val showDeleteAllUnlockedRewardsDialogLiveData =
-        savedStateHandle.getLiveData<Boolean>("showDeleteAllUnlockedRewardsDialogLiveData", false)
-    val showDeleteAllUnlockedRewardsDialog: LiveData<Boolean> =
-        showDeleteAllUnlockedRewardsDialogLiveData
+    private val showDeleteAllUnlockedRewardsDialog =
+        savedStateHandle.getLiveData<Boolean>("showDeleteAllUnlockedRewardsDialog", false)
+
+    val screenState = combineTuple(
+        rewards,
+        selectedRewardIds.asFlow(),
+        selectedItemCount.asFlow(),
+        multiSelectionModeActive.asFlow(),
+        showDeleteAllSelectedRewardsDialog.asFlow(),
+        showDeleteAllUnlockedRewardsDialog.asFlow()
+    ).map { (
+                rewards,
+                selectedRewardIds,
+                selectedItemCount,
+                multiSelectionModeActive,
+                showDeleteAllSelectedRewardsDialogLiveData,
+                showDeleteAllUnlockedRewardsDialogLiveData
+            ) ->
+        RewardListScreenState(
+            rewards = rewards,
+            selectedRewardIds = selectedRewardIds,
+            selectedItemCount = selectedItemCount,
+            multiSelectionModeActive = multiSelectionModeActive,
+            showDeleteAllSelectedRewardsDialog = showDeleteAllSelectedRewardsDialogLiveData,
+            showDeleteAllUnlockedRewardsDialog = showDeleteAllUnlockedRewardsDialogLiveData,
+        )
+    }.asLiveData()
 
     private val eventChannel = Channel<RewardListEvent>()
     val events: Flow<RewardListEvent> = eventChannel.receiveAsFlow()
@@ -59,56 +66,70 @@ class RewardListViewModel @Inject constructor(
         data class NavigateToEditRewardScreen(val reward: Reward) : RewardListEvent()
     }
 
+    init {
+        viewModelScope.launch {
+            rewards.collectLatest { rewards ->
+                val rewardIds = rewards.map { it.id }
+                selectedRewardIds.value = selectedRewardIds.value?.filter { rewardIds.contains(it) }
+                if (selectedRewardIds.value.isNullOrEmpty()) {
+                    cancelMultiSelectionMode()
+                }
+            }
+        }
+    }
+
     override fun onDeleteAllSelectedItemsClicked() {
-        showDeleteAllSelectedRewardsDialogLiveData.value = true
+        showDeleteAllSelectedRewardsDialog.value = true
     }
 
     override fun onDeleteAllSelectedRewardsConfirmed() {
-        showDeleteAllSelectedRewardsDialogLiveData.value = false
+        showDeleteAllSelectedRewardsDialog.value = false
         viewModelScope.launch {
-            val selectedRewards = selectedRewardsLiveData.value ?: emptyList()
+            val rewards = rewards.first()
+            val selectedRewardIds = selectedRewardIds.value ?: emptyList()
+            val selectedRewards =
+                rewards.filter { selectedRewardIds.contains(it.id) }
             rewardDao.deleteRewards(selectedRewards)
             cancelMultiSelectionMode()
         }
     }
 
     override fun onDeleteAllSelectedRewardsDialogDismissed() {
-        showDeleteAllSelectedRewardsDialogLiveData.value = false
+        showDeleteAllSelectedRewardsDialog.value = false
     }
 
     override fun onDeleteAllUnlockedRewardsClicked() {
-        showDeleteAllUnlockedRewardsDialogLiveData.value = true
+        showDeleteAllUnlockedRewardsDialog.value = true
     }
 
     override fun onDeleteAllUnlockedRewardsConfirmed() {
-        showDeleteAllUnlockedRewardsDialogLiveData.value = false
+        showDeleteAllUnlockedRewardsDialog.value = false
         viewModelScope.launch {
             rewardDao.deleteAllUnlockedRewards()
         }
     }
 
     override fun onDeleteAllUnlockedRewardsDialogDismissed() {
-        showDeleteAllUnlockedRewardsDialogLiveData.value = false
+        showDeleteAllUnlockedRewardsDialog.value = false
     }
 
     override fun onRewardClicked(reward: Reward) {
-        val multiSelectionModeActive = multiSelectionModeActiveLiveData.value
+        val multiSelectionModeActive = multiSelectionModeActive.value
         if (multiSelectionModeActive == false) {
             viewModelScope.launch {
                 eventChannel.send(RewardListEvent.NavigateToEditRewardScreen(reward))
             }
         } else {
-            val selectedRewards = selectedRewardsLiveData.value
-            if (selectedRewards != null) {
+            val selectedRewardIds = selectedRewardIds.value
+            if (selectedRewardIds != null) {
                 addOrRemoveSelectedReward(reward)
             }
         }
     }
 
     override fun onRewardLongClicked(reward: Reward) {
-        val multiSelectionModeActive = multiSelectionModeActiveLiveData.value
-        if (multiSelectionModeActive == false) {
-            multiSelectionModeActiveLiveData.value = true
+        if (multiSelectionModeActive.value == false) {
+            multiSelectionModeActive.value = true
         }
         addOrRemoveSelectedReward(reward)
     }
@@ -119,26 +140,26 @@ class RewardListViewModel @Inject constructor(
 
     private fun cancelMultiSelectionMode() {
         if (multiSelectionModeActive.value == false) return
-        selectedRewardsLiveData.value = emptyList()
-        multiSelectionModeActiveLiveData.value = false
+        selectedRewardIds.value = emptyList()
+        multiSelectionModeActive.value = false
     }
 
     private fun addOrRemoveSelectedReward(reward: Reward) {
-        val selectedRewards = selectedRewardsLiveData.value
-        if (selectedRewards != null) {
-            if (selectedRewards.contains(reward)) {
-                val selectedRewardsUpdate = selectedRewards.toMutableList().apply {
-                    remove(reward)
+        val selectedRewardIds = selectedRewardIds.value
+        if (selectedRewardIds != null) {
+            if (selectedRewardIds.contains(reward.id)) {
+                val selectedRewardsUpdate = selectedRewardIds.toMutableList().apply {
+                    remove(reward.id)
                     if (this.isEmpty()) {
-                        multiSelectionModeActiveLiveData.value = false
+                        multiSelectionModeActive.value = false
                     }
                 }
-                selectedRewardsLiveData.value = selectedRewardsUpdate
+                this.selectedRewardIds.value = selectedRewardsUpdate
             } else {
-                val selectedRewardsUpdate = selectedRewards.toMutableList().apply {
-                    add(reward)
+                val selectedRewardsUpdate = selectedRewardIds.toMutableList().apply {
+                    add(reward.id)
                 }
-                selectedRewardsLiveData.value = selectedRewardsUpdate
+                this.selectedRewardIds.value = selectedRewardsUpdate
             }
         }
     }

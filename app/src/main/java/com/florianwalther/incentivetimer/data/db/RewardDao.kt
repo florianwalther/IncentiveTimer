@@ -1,6 +1,7 @@
-package com.florianwalther.incentivetimer.data
+package com.florianwalther.incentivetimer.data.db
 
 import androidx.room.*
+import com.florianwalther.incentivetimer.data.db.Reward
 import kotlinx.coroutines.flow.Flow
 
 @Dao

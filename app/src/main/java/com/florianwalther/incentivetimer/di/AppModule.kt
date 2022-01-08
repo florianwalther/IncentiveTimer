@@ -2,8 +2,8 @@ package com.florianwalther.incentivetimer.di
 
 import android.app.Application
 import androidx.room.Room
-import com.florianwalther.incentivetimer.data.ITDatabase
-import com.florianwalther.incentivetimer.data.RewardDao
+import com.florianwalther.incentivetimer.data.db.ITDatabase
+import com.florianwalther.incentivetimer.data.db.RewardDao
 import com.florianwalther.incentivetimer.features.timer.DefaultTimeSource
 import com.florianwalther.incentivetimer.features.timer.TimeSource
 import dagger.Binds
