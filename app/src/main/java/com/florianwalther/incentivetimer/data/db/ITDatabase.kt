@@ -1,4 +1,4 @@
-package com.florianwalther.incentivetimer.data
+package com.florianwalther.incentivetimer.data.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase

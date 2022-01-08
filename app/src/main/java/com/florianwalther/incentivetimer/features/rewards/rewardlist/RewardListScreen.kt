@@ -28,27 +28,30 @@ import com.florianwalther.incentivetimer.core.ui.composables.SimpleConfirmationD
 import com.florianwalther.incentivetimer.core.ui.theme.ITBlue
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
 import com.florianwalther.incentivetimer.core.ui.theme.PrimaryLightAlpha
-import com.florianwalther.incentivetimer.data.Reward
+import com.florianwalther.incentivetimer.data.db.Reward
+import com.florianwalther.incentivetimer.features.rewards.rewardlist.model.RewardListScreenState
 import kotlinx.coroutines.launch
 
 @Composable
 fun RewardListScreenAppBar(
-    multiSelectionModeActive: Boolean,
-    selectedItemCount: Int,
+    screenState: RewardListScreenState,
     actions: RewardListActions,
 ) {
     TopAppBar(
         title = {
-            if (multiSelectionModeActive) {
-                Text(stringResource(R.string.selected_placeholder, selectedItemCount))
+            if (screenState.multiSelectionModeActive) {
+                Text(stringResource(R.string.selected_placeholder, screenState.selectedItemCount))
             } else {
                 Text(stringResource(R.string.reward_list))
             }
         },
         actions = {
-            if (multiSelectionModeActive) {
+            if (screenState.multiSelectionModeActive) {
                 IconButton(onClick = actions::onDeleteAllSelectedItemsClicked) {
-                    Icon(imageVector = Icons.Default.Delete, contentDescription = stringResource(R.string.delete_all_selected_items))
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.delete_all_selected_items)
+                    )
                 }
             } else {
                 var expanded by remember { mutableStateOf(false) }
@@ -72,7 +75,7 @@ fun RewardListScreenAppBar(
                 }
             }
         },
-        navigationIcon = if (multiSelectionModeActive) {
+        navigationIcon = if (screenState.multiSelectionModeActive) {
             {
                 IconButton(onClick = actions::onCancelMultiSelectionModeClicked) {
                     Icon(
@@ -89,10 +92,7 @@ fun RewardListScreenAppBar(
 
 @Composable
 fun RewardListScreenContent(
-    rewards: List<Reward>,
-    showDeleteAllUnlockedRewardsDialog: Boolean,
-    showDeleteAllSelectedRewardsDialog: Boolean,
-    selectedRewards: List<Reward>,
+    screenState: RewardListScreenState,
     onAddNewRewardClicked: () -> Unit,
     actions: RewardListActions,
     scaffoldState: ScaffoldState = rememberScaffoldState(),
@@ -125,8 +125,8 @@ fun RewardListScreenContent(
                 state = listState,
                 modifier = Modifier.fillMaxSize()
             ) {
-                items(rewards, key = { it.id }) { reward ->
-                    val selected = selectedRewards.contains(reward)
+                items(screenState.rewards, key = { it.id }) { reward ->
+                    val selected = screenState.selectedRewardIds.contains(reward.id)
                     val dismissState = rememberDismissState(
                         confirmStateChange = { dismissValue ->
                             if (dismissValue == DismissValue.DismissedToEnd || dismissValue == DismissValue.DismissedToStart) {
@@ -183,7 +183,7 @@ fun RewardListScreenContent(
         }
     }
 
-    if (showDeleteAllUnlockedRewardsDialog) {
+    if (screenState.showDeleteAllUnlockedRewardsDialog) {
         SimpleConfirmationDialog(
             title = R.string.delete_all_unlocked_rewards,
             text = R.string.delete_all_unlocked_rewards_confirmation_text,
@@ -192,7 +192,7 @@ fun RewardListScreenContent(
         )
     }
 
-    if (showDeleteAllSelectedRewardsDialog) {
+    if (screenState.showDeleteAllSelectedRewardsDialog) {
         SimpleConfirmationDialog(
             title = R.string.delete_rewards,
             text = R.string.delete_all_selected_rewards_confirmation_text,
@@ -327,14 +327,20 @@ private fun ScreenContentPreview() {
     IncentiveTimerTheme {
         Surface {
             RewardListScreenContent(
-                listOf(
-                    Reward(name = "CAKE", 5, iconKey = IconKey.CAKE),
-                    Reward(name = "BATH_TUB", 20, iconKey = IconKey.BATH_TUB),
-                    Reward(name = "TV", 60, iconKey = IconKey.TV),
+
+                screenState = RewardListScreenState(
+                    rewards = listOf(
+                        Reward(name = "CAKE", 5, iconKey = IconKey.CAKE),
+                        Reward(name = "BATH_TUB", 20, iconKey = IconKey.BATH_TUB),
+                        Reward(name = "TV", 60, iconKey = IconKey.TV),
+                    ),
+                    selectedRewardIds = listOf(2L),
+                    selectedItemCount = 1,
+                    multiSelectionModeActive = true,
+                    showDeleteAllSelectedRewardsDialog = false,
+                    showDeleteAllUnlockedRewardsDialog = false,
                 ),
                 onAddNewRewardClicked = {},
-                showDeleteAllUnlockedRewardsDialog = false,
-                showDeleteAllSelectedRewardsDialog = false,
                 actions = object : RewardListActions {
                     override fun onDeleteAllUnlockedRewardsClicked() {}
                     override fun onDeleteAllUnlockedRewardsConfirmed() {}
@@ -348,7 +354,6 @@ private fun ScreenContentPreview() {
                     override fun onDeleteAllSelectedRewardsDialogDismissed() {}
                     override fun onDeleteAllSelectedItemsClicked() {}
                 },
-                selectedRewards = listOf(),
             )
         }
     }

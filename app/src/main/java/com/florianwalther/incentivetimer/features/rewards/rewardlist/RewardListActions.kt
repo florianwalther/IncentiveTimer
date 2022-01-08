@@ -1,6 +1,6 @@
 package com.florianwalther.incentivetimer.features.rewards.rewardlist
 
-import com.florianwalther.incentivetimer.data.Reward
+import com.florianwalther.incentivetimer.data.db.Reward
 
 interface RewardListActions {
     fun onDeleteAllUnlockedRewardsClicked()

@@ -6,7 +6,7 @@ import app.cash.turbine.test
 import com.florianwalther.incentivetimer.core.ui.IconKey
 import com.florianwalther.incentivetimer.core.ui.defaultRewardIconKey
 import com.florianwalther.incentivetimer.data.FakeRewardDao
-import com.florianwalther.incentivetimer.data.Reward
+import com.florianwalther.incentivetimer.data.db.Reward
 import com.florianwalther.incentivetimer.getOrAwaitValue
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Dispatchers
@@ -62,7 +62,7 @@ class AddEditRewardViewModelTestWithRewardId {
 
     @Test
     fun rewardInput_hasRewardValues() {
-        assertThat(viewModel.rewardInput.getOrAwaitValue()).isEqualTo(reward1)
+        assertThat(viewModel.screenState.getOrAwaitValue().rewardInput).isEqualTo(reward1)
     }
 
     @Test
@@ -74,7 +74,7 @@ class AddEditRewardViewModelTestWithRewardId {
     fun unlockedStateCheckboxVisible_rewardUnlocked_True() = runTest {
         fakeRewardDao.updateReward(reward1.copy(isUnlocked = true))
 
-        assertThat(viewModel.unlockedStateCheckboxVisible.getOrAwaitValue()).isTrue()
+        assertThat(viewModel.screenState.getOrAwaitValue().unlockedStateCheckboxVisible).isTrue()
     }
 
     @Test
@@ -83,7 +83,7 @@ class AddEditRewardViewModelTestWithRewardId {
 
         viewModel.onRewardUnlockedCheckedChanged(false)
 
-        assertThat(viewModel.rewardInput.getOrAwaitValue().isUnlocked).isFalse()
+        assertThat(viewModel.screenState.getOrAwaitValue().rewardInput.isUnlocked).isFalse()
     }
 
     @Test
@@ -130,7 +130,7 @@ class AddEditRewardViewModelTestWithRewardId {
     fun onDeleteRewardClicked_showsDeleteRewardDialog() {
         viewModel.onDeleteRewardClicked()
 
-        assertThat(viewModel.showDeleteRewardConfirmationDialog.getOrAwaitValue()).isTrue()
+        assertThat(viewModel.screenState.getOrAwaitValue().showDeleteRewardConfirmationDialog).isTrue()
     }
 
     @Test
@@ -138,7 +138,7 @@ class AddEditRewardViewModelTestWithRewardId {
         viewModel.onDeleteRewardClicked()
         viewModel.onDeleteRewardConfirmed()
 
-        assertThat(viewModel.showDeleteRewardConfirmationDialog.getOrAwaitValue()).isFalse()
+        assertThat(viewModel.screenState.getOrAwaitValue().showDeleteRewardConfirmationDialog).isFalse()
     }
 
     @Test
@@ -166,6 +166,6 @@ class AddEditRewardViewModelTestWithRewardId {
         viewModel.onDeleteRewardClicked()
         viewModel.onDeleteRewardDialogDismissed()
 
-        assertThat(viewModel.showDeleteRewardConfirmationDialog.getOrAwaitValue()).isFalse()
+        assertThat(viewModel.screenState.getOrAwaitValue().showDeleteRewardConfirmationDialog).isFalse()
     }
 }

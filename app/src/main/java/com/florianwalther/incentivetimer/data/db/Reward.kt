@@ -1,4 +1,4 @@
-package com.florianwalther.incentivetimer.data
+package com.florianwalther.incentivetimer.data.db
 
 import android.os.Parcelable
 import androidx.room.Entity

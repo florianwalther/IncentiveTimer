@@ -90,6 +90,9 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:$lifecycle_version"
     kapt "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"
 
+    // DataStore
+    implementation "androidx.datastore:datastore-preferences:1.0.0"
+
     // Room
     def room_version = "2.4.0"
     implementation "androidx.room:room-runtime:$room_version"

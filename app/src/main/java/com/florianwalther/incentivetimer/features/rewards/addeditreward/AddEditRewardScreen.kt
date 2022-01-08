@@ -21,7 +21,8 @@ import com.florianwalther.incentivetimer.core.ui.composables.LabeledCheckbox
 import com.florianwalther.incentivetimer.core.ui.composables.SimpleConfirmationDialog
 import com.florianwalther.incentivetimer.core.ui.defaultRewardIconKey
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
-import com.florianwalther.incentivetimer.data.Reward
+import com.florianwalther.incentivetimer.data.db.Reward
+import com.florianwalther.incentivetimer.features.rewards.addeditreward.model.AddEditRewardScreenState
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.flowlayout.MainAxisAlignment
 
@@ -73,12 +74,8 @@ fun AddEditRewardScreenAppBar(
 
 @Composable
 fun AddEditRewardScreenContent(
+    screenState: AddEditRewardScreenState,
     isEditMode: Boolean,
-    rewardInput: Reward,
-    unlockedStateCheckboxVisible: Boolean,
-    rewardNameInputIsError: Boolean,
-    showRewardIconSelectionDialog: Boolean,
-    showDeleteRewardConfirmationDialog: Boolean,
     actions: AddEditRewardScreenActions,
 ) {
     Scaffold(
@@ -97,11 +94,11 @@ fun AddEditRewardScreenContent(
         Column(Modifier.padding(16.dp)) {
             val focusRequester = remember { FocusRequester() }
             TextField(
-                value = rewardInput.name,
+                value = screenState.rewardInput.name,
                 onValueChange = actions::onRewardNameInputChanged,
                 label = { Text(stringResource(R.string.reward_name)) },
                 singleLine = true,
-                isError = rewardNameInputIsError,
+                isError = screenState.rewardNameInputIsError,
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester),
@@ -111,7 +108,7 @@ fun AddEditRewardScreenContent(
                     focusRequester.requestFocus()
                 }
             }
-            if (rewardNameInputIsError) {
+            if (screenState.rewardNameInputIsError) {
                 Text(
                     stringResource(R.string.field_cant_be_blank),
                     style = MaterialTheme.typography.body2,
@@ -119,9 +116,9 @@ fun AddEditRewardScreenContent(
                 )
             }
             Spacer(Modifier.height(16.dp))
-            Text(stringResource(R.string.chance) + ": ${rewardInput.chanceInPercent}%")
+            Text(stringResource(R.string.chance) + ": ${screenState.rewardInput.chanceInPercent}%")
             Slider(
-                value = rewardInput.chanceInPercent.toFloat() / 100,
+                value = screenState.rewardInput.chanceInPercent.toFloat() / 100,
                 onValueChange = { chanceAsFloat ->
                     actions.onChanceInPercentInputChanged((chanceAsFloat * 100).toInt())
                 }
@@ -132,17 +129,17 @@ fun AddEditRewardScreenContent(
                 modifier = Modifier.size(64.dp)
             ) {
                 Icon(
-                    imageVector = rewardInput.iconKey.rewardIcon,
+                    imageVector = screenState.rewardInput.iconKey.rewardIcon,
                     contentDescription = stringResource(R.string.select_icon),
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(8.dp)
                 )
             }
-            if (unlockedStateCheckboxVisible) {
+            if (screenState.unlockedStateCheckboxVisible) {
                 Spacer(Modifier.height(16.dp))
                 LabeledCheckbox(
-                    checked = rewardInput.isUnlocked,
+                    checked = screenState.rewardInput.isUnlocked,
                     onCheckedChange = actions::onRewardUnlockedCheckedChanged,
                     text = stringResource(R.string.unlocked)
                 )
@@ -150,14 +147,14 @@ fun AddEditRewardScreenContent(
         }
     }
 
-    if (showRewardIconSelectionDialog) {
+    if (screenState.showRewardIconSelectionDialog) {
         RewardIconSelectionDialog(
             onDismissRequest = actions::onRewardIconDialogDismissed,
             onIconSelected = actions::onRewardIconSelected
         )
     }
 
-    if (showDeleteRewardConfirmationDialog) {
+    if (screenState.showDeleteRewardConfirmationDialog) {
         SimpleConfirmationDialog(
             title = R.string.confirm_deletion,
             text = R.string.confirm_reward_deletion_text,
@@ -220,16 +217,15 @@ private fun ScreenContentPreview() {
     IncentiveTimerTheme {
         Surface {
             AddEditRewardScreenContent(
-                isEditMode = false,
-                rewardInput = Reward(
-                    name = "Example reward",
-                    chanceInPercent = 10,
-                    iconKey = defaultRewardIconKey,
+                screenState = AddEditRewardScreenState.initialState.copy(
+                    rewardInput = Reward(
+                        name = "Example reward",
+                        chanceInPercent = 10,
+                        iconKey = defaultRewardIconKey,
+                    ),
+                    unlockedStateCheckboxVisible = true
                 ),
-                unlockedStateCheckboxVisible = true,
-                rewardNameInputIsError = false,
-                showRewardIconSelectionDialog = false,
-                showDeleteRewardConfirmationDialog = false,
+                isEditMode = true,
                 actions = object : AddEditRewardScreenActions {
                     override fun onRewardNameInputChanged(input: String) {}
                     override fun onChanceInPercentInputChanged(input: Int) {}

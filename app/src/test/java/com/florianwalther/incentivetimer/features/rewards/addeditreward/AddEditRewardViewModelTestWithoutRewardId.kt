@@ -6,7 +6,7 @@ import app.cash.turbine.test
 import com.florianwalther.incentivetimer.core.ui.IconKey
 import com.florianwalther.incentivetimer.core.ui.defaultRewardIconKey
 import com.florianwalther.incentivetimer.data.FakeRewardDao
-import com.florianwalther.incentivetimer.data.Reward
+import com.florianwalther.incentivetimer.data.db.Reward
 import com.florianwalther.incentivetimer.getOrAwaitValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -45,7 +45,7 @@ class AddEditRewardViewModelTestWithoutRewardId {
 
     @Test
     fun rewardInput_hasCorrectDefaultValues() {
-        assertThat(viewModel.rewardInput.getOrAwaitValue()).isEqualTo(
+        assertThat(viewModel.screenState.getOrAwaitValue().rewardInput).isEqualTo(
             defaultReward
         )
     }
@@ -57,22 +57,22 @@ class AddEditRewardViewModelTestWithoutRewardId {
 
     @Test
     fun unlockedStateCheckboxVisible_defaultValueFalse() {
-        assertThat(viewModel.unlockedStateCheckboxVisible.getOrAwaitValue()).isFalse()
+        assertThat(viewModel.screenState.getOrAwaitValue().unlockedStateCheckboxVisible).isFalse()
     }
 
     @Test
     fun showRewardIconSelectionDialog_defaultValueFalse() {
-        assertThat(viewModel.showRewardIconSelectionDialog.getOrAwaitValue()).isFalse()
+        assertThat(viewModel.screenState.getOrAwaitValue().showRewardIconSelectionDialog).isFalse()
     }
 
     @Test
     fun showDeleteRewardConfirmationDialog_defaultValueFalse() {
-        assertThat(viewModel.showDeleteRewardConfirmationDialog.getOrAwaitValue()).isFalse()
+        assertThat(viewModel.screenState.getOrAwaitValue().showDeleteRewardConfirmationDialog).isFalse()
     }
 
     @Test
     fun rewardNameInputIsError_defaultValueFalse() {
-        assertThat(viewModel.rewardNameInputIsError.getOrAwaitValue()).isFalse()
+        assertThat(viewModel.screenState.getOrAwaitValue().rewardNameInputIsError).isFalse()
     }
 
     @Test
@@ -80,7 +80,7 @@ class AddEditRewardViewModelTestWithoutRewardId {
         val input = "new input"
         viewModel.onRewardNameInputChanged(input)
 
-        assertThat(viewModel.rewardInput.getOrAwaitValue().name).isEqualTo(input)
+        assertThat(viewModel.screenState.getOrAwaitValue().rewardInput.name).isEqualTo(input)
     }
 
     @Test
@@ -88,7 +88,7 @@ class AddEditRewardViewModelTestWithoutRewardId {
         val input = 22
         viewModel.onChanceInPercentInputChanged(input)
 
-        assertThat(viewModel.rewardInput.getOrAwaitValue().chanceInPercent).isEqualTo(input)
+        assertThat(viewModel.screenState.getOrAwaitValue().rewardInput.chanceInPercent).isEqualTo(input)
     }
 
     @Test
@@ -96,14 +96,14 @@ class AddEditRewardViewModelTestWithoutRewardId {
         val input = IconKey.BEVERAGE
         viewModel.onRewardIconSelected(input)
 
-        assertThat(viewModel.rewardInput.getOrAwaitValue().iconKey).isEqualTo(input)
+        assertThat(viewModel.screenState.getOrAwaitValue().rewardInput.iconKey).isEqualTo(input)
     }
 
     @Test
     fun onRewardIconButtonClicked_showsRewardIconSelectionDialog() {
         viewModel.onRewardIconButtonClicked()
 
-        assertThat(viewModel.showRewardIconSelectionDialog.getOrAwaitValue()).isTrue()
+        assertThat(viewModel.screenState.getOrAwaitValue().showRewardIconSelectionDialog).isTrue()
     }
 
     @Test
@@ -111,7 +111,7 @@ class AddEditRewardViewModelTestWithoutRewardId {
         viewModel.onRewardIconButtonClicked()
         viewModel.onRewardIconDialogDismissed()
 
-        assertThat(viewModel.showRewardIconSelectionDialog.getOrAwaitValue()).isFalse()
+        assertThat(viewModel.screenState.getOrAwaitValue().showRewardIconSelectionDialog).isFalse()
     }
 
     @Test
@@ -127,7 +127,7 @@ class AddEditRewardViewModelTestWithoutRewardId {
     fun onSaveClicked_emptyNameInput_setsRewardNameInputIsErrorTrue() {
         viewModel.onSaveClicked()
 
-        assertThat(viewModel.rewardNameInputIsError.getOrAwaitValue()).isTrue()
+        assertThat(viewModel.screenState.getOrAwaitValue().rewardNameInputIsError).isTrue()
     }
 
     @Test
@@ -168,7 +168,7 @@ class AddEditRewardViewModelTestWithoutRewardId {
         viewModel.onRewardNameInputChanged("new reward")
         viewModel.onSaveClicked()
 
-        assertThat(viewModel.rewardNameInputIsError.getOrAwaitValue()).isFalse()
+        assertThat(viewModel.screenState.getOrAwaitValue().rewardNameInputIsError).isFalse()
     }
 
     @Test

@@ -1,7 +1,7 @@
 package com.florianwalther.incentivetimer.features.rewards
 
 import com.florianwalther.incentivetimer.core.notification.NotificationHelper
-import com.florianwalther.incentivetimer.data.RewardDao
+import com.florianwalther.incentivetimer.data.db.RewardDao
 import com.florianwalther.incentivetimer.di.ApplicationScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
