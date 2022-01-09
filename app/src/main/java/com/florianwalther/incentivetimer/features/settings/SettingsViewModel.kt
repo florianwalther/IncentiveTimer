@@ -26,22 +26,28 @@ class SettingsViewModel @Inject constructor(
     private val showLongBreakLengthDialog =
         savedStateHandle.getLiveData<Boolean>("showLongBreakLengthDialog", false)
 
+    private val showPomodorosPerSetDialog =
+        savedStateHandle.getLiveData<Boolean>("showPomodorosPerSetDialog", false)
+
     val screenState = combineTuple(
         timerPreferences,
         showPomodoroLengthDialog.asFlow(),
         showShortBreakLengthDialog.asFlow(),
-        showLongBreakLengthDialog.asFlow()
+        showLongBreakLengthDialog.asFlow(),
+        showPomodorosPerSetDialog.asFlow(),
     ).map { (
                 timerPreferences,
                 showPomodoroLengthDialog,
                 showShortBreakLengthDialog,
                 showLongBreakLengthDialog,
+                showPomodorosPerSetDialog,
             ) ->
         SettingsScreenState(
             timerPreferences = timerPreferences,
             showPomodoroLengthDialog = showPomodoroLengthDialog,
             showShortBreakLengthDialog = showShortBreakLengthDialog,
             showLongBreakLengthDialog = showLongBreakLengthDialog,
+            showPomodorosPerSetDialog = showPomodorosPerSetDialog,
         )
     }.asLiveData()
 
@@ -88,5 +94,20 @@ class SettingsViewModel @Inject constructor(
 
     override fun onLongBreakLengthDialogDismissed() {
         showLongBreakLengthDialog.value = false
+    }
+
+    override fun onPomodorosPerSetPreferenceClicked() {
+        showPomodorosPerSetDialog.value = true
+    }
+
+    override fun onPomodorosPerSetSet(amount: Int) {
+        viewModelScope.launch {
+            preferencesManager.updatePomodorosPerSet(amount)
+            showPomodorosPerSetDialog.value = false
+        }
+    }
+
+    override fun onPomodorosPerSetDialogDismissed() {
+        showPomodorosPerSetDialog.value = false
     }
 }

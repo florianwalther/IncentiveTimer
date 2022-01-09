@@ -3,6 +3,7 @@ package com.florianwalther.incentivetimer.features.timer
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.SavedStateHandle
 import com.florianwalther.incentivetimer.core.notification.NotificationHelper
+import com.florianwalther.incentivetimer.core.util.minutesToMilliseconds
 import com.florianwalther.incentivetimer.data.FakeRewardDao
 import com.florianwalther.incentivetimer.features.rewards.RewardUnlockManager
 import com.florianwalther.incentivetimer.getOrAwaitValue
@@ -28,7 +29,6 @@ class TimerViewModelTest {
     @MockK
     private lateinit var notificationHelper: NotificationHelper
 
-    @MockK
     private lateinit var timerServiceManager: TimerServiceManager
 
     private lateinit var fakeTimeSource: FakeTimeSource
@@ -92,6 +92,7 @@ class TimerViewModelTest {
     fun onStartStopTimerClicked_callsRemoveTimerCompletedNotification() {
         viewModel.onStartStopTimerClicked()
 
+        // TODO: Should we use a fake with state instead of a mock?
         verify { notificationHelper.removeTimerCompletedNotification() }
     }
 
@@ -123,18 +124,18 @@ class TimerViewModelTest {
             viewModel.onStartStopTimerClicked()
 
             repeat(3) {
-               advanceTimeBy(25 * 60 * 1000L)
-               fakeTimeSource.advanceTimeBy(25 * 60 * 1000L)
+               advanceTimeBy(25.minutesToMilliseconds())
+               fakeTimeSource.advanceTimeBy(25.minutesToMilliseconds())
                 runCurrent()
-                advanceTimeBy(5 * 60 * 1000L)
-                fakeTimeSource.advanceTimeBy(5 * 60 * 1000L)
+                advanceTimeBy(5.minutesToMilliseconds())
+                fakeTimeSource.advanceTimeBy(5.minutesToMilliseconds())
                 runCurrent()
             }
-            testScope.advanceTimeBy(25 * 60 * 1000L)
-            fakeTimeSource.advanceTimeBy(25 * 60 * 1000L)
+            testScope.advanceTimeBy(25.minutesToMilliseconds())
+            fakeTimeSource.advanceTimeBy(25.minutesToMilliseconds())
             runCurrent()
-            testScope.advanceTimeBy(15 * 60 * 1000L)
-            fakeTimeSource.advanceTimeBy(15 * 60 * 1000L)
+            testScope.advanceTimeBy(15.minutesToMilliseconds())
+            fakeTimeSource.advanceTimeBy(15.minutesToMilliseconds())
             runCurrent()
 
             viewModel.onStartStopTimerClicked()

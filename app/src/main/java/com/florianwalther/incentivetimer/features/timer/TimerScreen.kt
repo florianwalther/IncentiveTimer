@@ -26,6 +26,7 @@ import com.florianwalther.incentivetimer.core.ui.composables.SimpleConfirmationD
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
 import com.florianwalther.incentivetimer.core.ui.theme.PrimaryLightAlpha
 import com.florianwalther.incentivetimer.core.util.formatMillisecondsToTimeString
+import com.florianwalther.incentivetimer.core.util.minutesToMilliseconds
 import com.florianwalther.incentivetimer.features.timer.model.TimerScreenState
 
 @Composable
@@ -292,8 +293,8 @@ private fun ScreenContentPreview() {
             TimerScreenContent(
                 pomodoroTimerState = PomodoroTimerState(
                     timerRunning = true,
-                    timeLeftInMillis = 15 * 60 * 1000L,
-                    timeTargetInMillis = POMODORO_DURATION_IN_MILLIS,
+                    timeLeftInMillis = 15.minutesToMilliseconds(),
+                    timeTargetInMillis = 25,
                     currentPhase = PomodoroPhase.POMODORO,
                     pomodorosCompletedInSet = 3,
                     pomodorosCompletedTotal = 5,

@@ -11,3 +11,5 @@ fun formatMillisecondsToTimeString(milliseconds: Long): String {
         String.format("%d:%02d:%02d", h, m, s)
     }
 }
+
+fun Int.minutesToMilliseconds(): Long = this * 60_000L

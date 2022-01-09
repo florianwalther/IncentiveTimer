@@ -40,6 +40,7 @@ fun SettingsScreenContent(
     val pomodoroLength = screenState.timerPreferences.pomodoroLengthInMinutes
     val shortBreakLength = screenState.timerPreferences.shortBreakLengthInMinutes
     val longBreakLength = screenState.timerPreferences.longBreakLengthInMinutes
+    val pomodorosPerSet = screenState.timerPreferences.pomodorosPerSet
 
     Column {
         SectionTitle(R.string.timer)
@@ -61,38 +62,58 @@ fun SettingsScreenContent(
             summary = stringResource(R.string.minutes_placeholder, longBreakLength),
             onClick = actions::onLongBreakLengthPreferenceClicked,
         )
+        Divider()
+        BasicPreference(
+            title = stringResource(R.string.number_of_pomodoros_before_long_break),
+            summary = pomodorosPerSet.toString(),
+            onClick = actions::onPomodorosPerSetPreferenceClicked,
+        )
     }
 
     if (screenState.showPomodoroLengthDialog) {
-        MinutesPickerDialog(
+        NumberPickerDialog(
             title = R.string.pomodoro_length,
             minValue = 1,
             maxValue = 180,
             initialValue = pomodoroLength,
             onConfirmed = actions::onPomodoroLengthSet,
             onDismissRequest = actions::onPomodoroLengthDialogDismissed,
+            label = R.string.minutes_abbr,
         )
     }
 
     if (screenState.showShortBreakLengthDialog) {
-        MinutesPickerDialog(
+        NumberPickerDialog(
             title = R.string.short_break_length,
             minValue = 1,
             maxValue = 180,
             initialValue = shortBreakLength,
             onConfirmed = actions::onShortBreakLengthSet,
             onDismissRequest = actions::onShortBreakLengthDialogDismissed,
+            label = R.string.minutes_abbr,
         )
     }
 
     if (screenState.showLongBreakLengthDialog) {
-        MinutesPickerDialog(
+        NumberPickerDialog(
             title = R.string.long_break_length,
             minValue = 1,
             maxValue = 180,
             initialValue = longBreakLength,
             onConfirmed = actions::onLongBreakLengthSet,
             onDismissRequest = actions::onLongBreakLengthDialogDismissed,
+            label = R.string.minutes_abbr,
+        )
+    }
+
+    if (screenState.showPomodorosPerSetDialog) {
+        NumberPickerDialog(
+            title = R.string.number_of_pomodoros_before_long_break,
+            minValue = 1,
+            maxValue = 16,
+            initialValue = pomodorosPerSet,
+            onConfirmed = actions::onPomodorosPerSetSet,
+            onDismissRequest = actions::onPomodorosPerSetDialogDismissed
         )
     }
 }
@@ -142,7 +163,7 @@ private fun BasicPreference(
 }
 
 @Composable
-private fun MinutesPickerDialog(
+private fun NumberPickerDialog(
     @StringRes title: Int,
     minValue: Int,
     maxValue: Int,
@@ -150,6 +171,7 @@ private fun MinutesPickerDialog(
     modifier: Modifier = Modifier,
     onConfirmed: (value: Int) -> Unit,
     onDismissRequest: () -> Unit,
+    @StringRes label: Int? = null,
 ) {
     var value by rememberSaveable { mutableStateOf(initialValue) }
 
@@ -170,9 +192,9 @@ private fun MinutesPickerDialog(
                         value = initialValue,
                         onValueChanged = { value = it },
                     )
-                    Text(
-                        stringResource(R.string.minutes_abbr),
-                    )
+                    if (label != null) {
+                        Text(stringResource(label))
+                    }
                 }
                 Spacer(Modifier.height(8.dp))
             }
@@ -210,12 +232,15 @@ private fun ScreenContentPreview() {
                     override fun onPomodoroLengthPreferenceClicked() {}
                     override fun onShortBreakLengthPreferenceClicked() {}
                     override fun onLongBreakLengthPreferenceClicked() {}
-                    override fun onPomodoroLengthSet(value: Int) {}
+                    override fun onPomodoroLengthSet(lengthInMinutes: Int) {}
                     override fun onPomodoroLengthDialogDismissed() {}
-                    override fun onShortBreakLengthSet(value: Int) {}
+                    override fun onShortBreakLengthSet(lengthInMinutes: Int) {}
                     override fun onShortBreakLengthDialogDismissed() {}
-                    override fun onLongBreakLengthSet(value: Int) {}
+                    override fun onLongBreakLengthSet(lengthInMinutes: Int) {}
                     override fun onLongBreakLengthDialogDismissed() {}
+                    override fun onPomodorosPerSetPreferenceClicked() {}
+                    override fun onPomodorosPerSetSet(amount: Int) {}
+                    override fun onPomodorosPerSetDialogDismissed() {}
                 }
             )
         }

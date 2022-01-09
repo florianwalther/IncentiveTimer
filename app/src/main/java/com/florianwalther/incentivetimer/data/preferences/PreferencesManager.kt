@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.florianwalther.incentivetimer.features.timer.PomodoroPhase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -21,7 +22,14 @@ data class TimerPreferences(
     val pomodoroLengthInMinutes: Int,
     val shortBreakLengthInMinutes: Int,
     val longBreakLengthInMinutes: Int,
-)
+    val pomodorosPerSet: Int,
+) {
+    fun lengthInMinutesForPhase(phase: PomodoroPhase) = when(phase){
+        PomodoroPhase.POMODORO -> pomodoroLengthInMinutes
+        PomodoroPhase.SHORT_BREAK -> shortBreakLengthInMinutes
+        PomodoroPhase.LONG_BREAK -> longBreakLengthInMinutes
+    }
+}
 
 @Singleton
 class PreferencesManager @Inject constructor(
@@ -47,10 +55,13 @@ class PreferencesManager @Inject constructor(
             val longBreakLengthInMinutes =
                 preferences[PreferencesKeys.LONG_BREAK_LENGTH_IN_MINUTES]
                     ?: LONG_BREAK_LENGTH_IN_MINUTES_DEFAULT
+            val pomodorosPerSet =
+                preferences[PreferencesKeys.POMODOROS_PER_SET] ?: POMODOROS_PER_SET_DEFAULT
             TimerPreferences(
                 pomodoroLengthInMinutes = pomodoroLengthInMinutes,
                 shortBreakLengthInMinutes = shortBreakLengthInMinutes,
                 longBreakLengthInMinutes = longBreakLengthInMinutes,
+                pomodorosPerSet = pomodorosPerSet,
             )
         }
 
@@ -72,13 +83,21 @@ class PreferencesManager @Inject constructor(
         }
     }
 
+    suspend fun updatePomodorosPerSet(amount: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.POMODOROS_PER_SET] = amount
+        }
+    }
+
     private object PreferencesKeys {
         val POMODORO_LENGTH_IN_MINUTES = intPreferencesKey("POMODORO_LENGTH_IN_MINUTES")
         val SHORT_BREAK_LENGTH_IN_MINUTES = intPreferencesKey("SHORT_BREAK_LENGTH_IN_MINUTES")
         val LONG_BREAK_LENGTH_IN_MINUTES = intPreferencesKey("LONG_BREAK_LENGTH_IN_MINUTES")
+        val POMODOROS_PER_SET = intPreferencesKey("POMODOROS_PER_SET")
     }
 }
 
 const val POMODORO_LENGTH_IN_MINUTES_DEFAULT = 25
 const val SHORT_BREAK_LENGTH_IN_MINUTES_DEFAULT = 5
 const val LONG_BREAK_LENGTH_IN_MINUTES_DEFAULT = 15
+const val POMODOROS_PER_SET_DEFAULT = 4

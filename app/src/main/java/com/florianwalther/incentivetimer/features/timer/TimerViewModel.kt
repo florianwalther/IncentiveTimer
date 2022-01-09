@@ -5,6 +5,7 @@ import com.florianwalther.incentivetimer.features.timer.model.TimerScreenState
 import com.zhuinden.flowcombinetuplekt.combineTuple
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -62,7 +63,9 @@ class TimerViewModel @Inject constructor(
 
     override fun onResetTimerConfirmed() {
         showResetTimerConfirmationDialog.value = false
-        pomodoroTimerManager.resetTimer()
+        viewModelScope.launch {
+            pomodoroTimerManager.stopAndResetTimer()
+        }
     }
 
     override fun onResetTimerDialogDismissed() {
@@ -88,7 +91,9 @@ class TimerViewModel @Inject constructor(
 
     override fun onResetPomodoroSetConfirmed() {
         showResetPomodoroSetConfirmationDialog.value = false
-        pomodoroTimerManager.resetPomodoroSet()
+        viewModelScope.launch {
+            pomodoroTimerManager.resetPomodoroSet()
+        }
     }
 
     override fun onResetPomodoroSetDialogDismissed() {
