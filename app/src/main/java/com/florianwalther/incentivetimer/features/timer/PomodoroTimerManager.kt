@@ -80,7 +80,7 @@ class PomodoroTimerManager @Inject constructor(
     init {
         applicationScope.launch {
             setPomodoroPhaseAndResetTimer(PomodoroPhase.POMODORO)
-            preferencesManager.timerPreferences.collectLatest { timerPreferences ->
+            timerPreferences.collectLatest { timerPreferences ->
                 val currentPhase = currentPhase.value
                 val currentTimeTargetInMillis = timeTargetInMillis.value
                 val currentTimeLeftInMillis = timeLeftInMillis.value

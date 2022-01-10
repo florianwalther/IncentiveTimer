@@ -4,8 +4,12 @@ import android.app.Application
 import androidx.room.Room
 import com.florianwalther.incentivetimer.data.db.ITDatabase
 import com.florianwalther.incentivetimer.data.db.RewardDao
+import com.florianwalther.incentivetimer.data.preferences.DefaultPreferencesManager
+import com.florianwalther.incentivetimer.data.preferences.PreferencesManager
 import com.florianwalther.incentivetimer.features.timer.DefaultTimeSource
+import com.florianwalther.incentivetimer.features.timer.DefaultTimerServiceManager
 import com.florianwalther.incentivetimer.features.timer.TimeSource
+import com.florianwalther.incentivetimer.features.timer.TimerServiceManager
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -47,6 +51,12 @@ abstract class AppModule {
 
     @Binds
     abstract fun bindTimeSource(timeSource: DefaultTimeSource): TimeSource
+
+    @Binds
+    abstract fun bindPreferencesManager(preferencesManager: DefaultPreferencesManager): PreferencesManager
+
+    @Binds
+    abstract fun bindTimerServiceManager(timerServiceManager: DefaultTimerServiceManager): TimerServiceManager
 }
 
 

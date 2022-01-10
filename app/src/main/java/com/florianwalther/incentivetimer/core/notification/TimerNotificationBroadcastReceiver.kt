@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import com.florianwalther.incentivetimer.features.timer.PomodoroPhase
 import com.florianwalther.incentivetimer.features.timer.PomodoroTimerManager
-import com.florianwalther.incentivetimer.features.timer.TimerServiceManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
