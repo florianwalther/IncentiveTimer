@@ -15,7 +15,7 @@ class TimerNotificationBroadcastReceiver : BroadcastReceiver() {
     lateinit var pomodoroTimerManager: PomodoroTimerManager
 
     @Inject
-    lateinit var notificationHelper: NotificationHelper
+    lateinit var notificationHelper: DefaultNotificationHelper
 
     override fun onReceive(p0: Context?, intent: Intent?) {
         val timerRunning = intent?.getBooleanExtra(EXTRA_TIMER_RUNNING, false)
@@ -25,7 +25,6 @@ class TimerNotificationBroadcastReceiver : BroadcastReceiver() {
             val timeLeftInMillis = intent.getLongExtra(EXTRA_TIME_LEFT_IN_MILLIS, -1)
             if (currentPhase != null && timeLeftInMillis != -1L) {
                 notificationHelper.showResumeTimerNotification(
-                    timerRunning = false,
                     currentPhase = currentPhase,
                     timeLeftInMillis = timeLeftInMillis
                 )

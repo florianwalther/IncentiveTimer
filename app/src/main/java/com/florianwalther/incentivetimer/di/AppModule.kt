@@ -2,6 +2,8 @@ package com.florianwalther.incentivetimer.di
 
 import android.app.Application
 import androidx.room.Room
+import com.florianwalther.incentivetimer.core.notification.DefaultNotificationHelper
+import com.florianwalther.incentivetimer.core.notification.NotificationHelper
 import com.florianwalther.incentivetimer.data.db.ITDatabase
 import com.florianwalther.incentivetimer.data.db.RewardDao
 import com.florianwalther.incentivetimer.data.preferences.DefaultPreferencesManager
@@ -57,6 +59,9 @@ abstract class AppModule {
 
     @Binds
     abstract fun bindTimerServiceManager(timerServiceManager: DefaultTimerServiceManager): TimerServiceManager
+
+   @Binds
+    abstract fun bindNotificationHelper(notificationHelper: DefaultNotificationHelper): NotificationHelper
 }
 
 

@@ -3,7 +3,7 @@ package com.florianwalther.incentivetimer.features.timer
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import com.florianwalther.incentivetimer.core.notification.NotificationHelper
+import com.florianwalther.incentivetimer.core.notification.DefaultNotificationHelper
 import com.florianwalther.incentivetimer.core.notification.TIMER_SERVICE_NOTIFICATION_ID
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +22,7 @@ class TimerService : Service() {
     lateinit var pomodoroTimerManager: PomodoroTimerManager
 
     @Inject
-    lateinit var notificationHelper: NotificationHelper
+    lateinit var notificationHelper: DefaultNotificationHelper
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startForeground(
