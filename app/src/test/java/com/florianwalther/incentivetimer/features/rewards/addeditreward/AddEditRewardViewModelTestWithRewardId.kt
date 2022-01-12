@@ -39,13 +39,13 @@ class AddEditRewardViewModelTestWithRewardId {
     private val rewardIdArg = 1L
 
     private lateinit var fakeRewardDao: FakeRewardDao
-    private lateinit var viewModel: AddEditRewardViewModel
+    private lateinit var addEditRewardViewModel: AddEditRewardViewModel
 
     @Before
     fun setUp() {
         fakeRewardDao = FakeRewardDao(data)
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        viewModel = AddEditRewardViewModel(
+        addEditRewardViewModel = AddEditRewardViewModel(
             rewardDao = fakeRewardDao,
             savedStateHandle = SavedStateHandle(
                 mapOf(
@@ -62,34 +62,34 @@ class AddEditRewardViewModelTestWithRewardId {
 
     @Test
     fun rewardInput_hasRewardValues() {
-        assertThat(viewModel.screenState.getOrAwaitValue().rewardInput).isEqualTo(reward1)
+        assertThat(addEditRewardViewModel.screenState.getOrAwaitValue().rewardInput).isEqualTo(reward1)
     }
 
     @Test
     fun isEditMode_True() {
-        assertThat(viewModel.isEditMode).isTrue()
+        assertThat(addEditRewardViewModel.isEditMode).isTrue()
     }
 
     @Test
     fun unlockedStateCheckboxVisible_rewardUnlocked_True() = runTest {
         fakeRewardDao.updateReward(reward1.copy(isUnlocked = true))
 
-        assertThat(viewModel.screenState.getOrAwaitValue().unlockedStateCheckboxVisible).isTrue()
+        assertThat(addEditRewardViewModel.screenState.getOrAwaitValue().unlockedStateCheckboxVisible).isTrue()
     }
 
     @Test
     fun onRewardUnlockedCheckedChanged_updatesRewardInput() = runTest {
         fakeRewardDao.updateReward(reward1.copy(isUnlocked = true))
 
-        viewModel.onRewardUnlockedCheckedChanged(false)
+        addEditRewardViewModel.onRewardUnlockedCheckedChanged(false)
 
-        assertThat(viewModel.screenState.getOrAwaitValue().rewardInput.isUnlocked).isFalse()
+        assertThat(addEditRewardViewModel.screenState.getOrAwaitValue().rewardInput.isUnlocked).isFalse()
     }
 
     @Test
     fun onSaveClicked_emptyNameInput_doesNotUpdateReward() = runTest {
-        viewModel.onRewardNameInputChanged("")
-        viewModel.onSaveClicked()
+        addEditRewardViewModel.onRewardNameInputChanged("")
+        addEditRewardViewModel.onSaveClicked()
 
         val reward = fakeRewardDao.getRewardById(rewardIdArg).first()
 
@@ -101,10 +101,10 @@ class AddEditRewardViewModelTestWithRewardId {
         val nameInput = "new name"
         val chanceInPercentInput = 20
         val iconKeyInput = IconKey.BATH_TUB
-        viewModel.onRewardNameInputChanged(nameInput)
-        viewModel.onChanceInPercentInputChanged(chanceInPercentInput)
-        viewModel.onRewardIconSelected(iconKeyInput)
-        viewModel.onSaveClicked()
+        addEditRewardViewModel.onRewardNameInputChanged(nameInput)
+        addEditRewardViewModel.onChanceInPercentInputChanged(chanceInPercentInput)
+        addEditRewardViewModel.onRewardIconSelected(iconKeyInput)
+        addEditRewardViewModel.onSaveClicked()
 
         val reward = fakeRewardDao.getRewardById(rewardIdArg).first()
 
@@ -119,32 +119,32 @@ class AddEditRewardViewModelTestWithRewardId {
 
     @Test
     fun onSaveClicked_validInput_sendsRewardUpdatedEvent() = runTest {
-        viewModel.onSaveClicked()
+        addEditRewardViewModel.onSaveClicked()
 
-        viewModel.events.test {
+        addEditRewardViewModel.events.test {
             assertThat(awaitItem()).isEqualTo(AddEditRewardViewModel.AddEditRewardEvent.RewardUpdated)
         }
     }
 
     @Test
     fun onDeleteRewardClicked_showsDeleteRewardDialog() {
-        viewModel.onDeleteRewardClicked()
+        addEditRewardViewModel.onDeleteRewardClicked()
 
-        assertThat(viewModel.screenState.getOrAwaitValue().showDeleteRewardConfirmationDialog).isTrue()
+        assertThat(addEditRewardViewModel.screenState.getOrAwaitValue().showDeleteRewardConfirmationDialog).isTrue()
     }
 
     @Test
     fun onDeleteRewardConfirmed_hidesDeleteRewardDialog() {
-        viewModel.onDeleteRewardClicked()
-        viewModel.onDeleteRewardConfirmed()
+        addEditRewardViewModel.onDeleteRewardClicked()
+        addEditRewardViewModel.onDeleteRewardConfirmed()
 
-        assertThat(viewModel.screenState.getOrAwaitValue().showDeleteRewardConfirmationDialog).isFalse()
+        assertThat(addEditRewardViewModel.screenState.getOrAwaitValue().showDeleteRewardConfirmationDialog).isFalse()
     }
 
     @Test
     fun onDeleteRewardConfirmed_deletesReward() = runTest {
-        viewModel.onDeleteRewardClicked()
-        viewModel.onDeleteRewardConfirmed()
+        addEditRewardViewModel.onDeleteRewardClicked()
+        addEditRewardViewModel.onDeleteRewardConfirmed()
 
         val rewards = fakeRewardDao.getAllRewardsSortedByIsUnlockedDesc().first()
         assertThat(rewards).isEmpty()
@@ -153,19 +153,19 @@ class AddEditRewardViewModelTestWithRewardId {
 
     @Test
     fun onDeleteRewardConfirmed_sendsRewardDeletedEvent() = runTest {
-        viewModel.onDeleteRewardClicked()
-        viewModel.onDeleteRewardConfirmed()
+        addEditRewardViewModel.onDeleteRewardClicked()
+        addEditRewardViewModel.onDeleteRewardConfirmed()
 
-        viewModel.events.test {
+        addEditRewardViewModel.events.test {
             assertThat(awaitItem()).isEqualTo(AddEditRewardViewModel.AddEditRewardEvent.RewardDeleted)
         }
     }
 
     @Test
     fun onDeleteRewardDialogDismissed_hidesDeleteRewardDialog() {
-        viewModel.onDeleteRewardClicked()
-        viewModel.onDeleteRewardDialogDismissed()
+        addEditRewardViewModel.onDeleteRewardClicked()
+        addEditRewardViewModel.onDeleteRewardDialogDismissed()
 
-        assertThat(viewModel.screenState.getOrAwaitValue().showDeleteRewardConfirmationDialog).isFalse()
+        assertThat(addEditRewardViewModel.screenState.getOrAwaitValue().showDeleteRewardConfirmationDialog).isFalse()
     }
 }
