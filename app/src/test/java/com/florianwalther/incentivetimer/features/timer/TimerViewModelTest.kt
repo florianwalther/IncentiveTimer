@@ -2,17 +2,18 @@ package com.florianwalther.incentivetimer.features.timer
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.SavedStateHandle
-import com.florianwalther.incentivetimer.core.notification.NotificationHelper
+import com.florianwalther.incentivetimer.core.notification.FakeNotificationHelper
+import com.florianwalther.incentivetimer.core.notification.ResumeTimerNotificationState
+import com.florianwalther.incentivetimer.core.notification.TimerCompletedNotificationState
 import com.florianwalther.incentivetimer.core.util.minutesToMilliseconds
 import com.florianwalther.incentivetimer.data.FakeRewardDao
+import com.florianwalther.incentivetimer.data.preferences.FakePreferencesManager
 import com.florianwalther.incentivetimer.features.rewards.RewardUnlockManager
 import com.florianwalther.incentivetimer.getOrAwaitValue
 
 import org.junit.After
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
-import io.mockk.impl.annotations.MockK
-import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.*
 import org.junit.Before
@@ -26,31 +27,41 @@ class TimerViewModelTest {
 
     private val testScope = TestScope()
 
-    @MockK
-    private lateinit var notificationHelper: NotificationHelper
+    private lateinit var fakeNotificationHelper: FakeNotificationHelper
 
-    private lateinit var timerServiceManager: TimerServiceManager
+    private lateinit var fakeTimerServiceManager: FakeTimerServiceManager
 
     private lateinit var fakeTimeSource: FakeTimeSource
 
-    private lateinit var viewModel: TimerViewModel
+    private lateinit var countDownTimer: CountDownTimer
+
+    private lateinit var timerViewModel: TimerViewModel
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this, relaxUnitFun = true)
         Dispatchers.setMain(UnconfinedTestDispatcher(testScope.testScheduler))
+        fakeTimerServiceManager = FakeTimerServiceManager()
+        fakeNotificationHelper = FakeNotificationHelper()
         fakeTimeSource = FakeTimeSource()
-        viewModel = TimerViewModel(
+        countDownTimer = CountDownTimer(testScope, fakeTimeSource)
+        timerViewModel = TimerViewModel(
             pomodoroTimerManager = PomodoroTimerManager(
-                timer = CountDownTimer(testScope, fakeTimeSource),
-                timerServiceManager = timerServiceManager,
-                notificationHelper = notificationHelper,
+                timer = countDownTimer,
+                timerServiceManager = fakeTimerServiceManager,
+                notificationHelper = fakeNotificationHelper,
                 rewardUnlockManager = RewardUnlockManager(
                     rewardDao = FakeRewardDao(),
                     applicationScope = testScope,
-                    notificationHelper = notificationHelper
+                    notificationHelper = fakeNotificationHelper
                 ),
                 applicationScope = testScope,
+                preferencesManager = FakePreferencesManager(
+                    initialPomodoroLengthInMinutes = 25,
+                    initialShortBreakLengthInMinutes = 5,
+                    initialLongBreakLengthInMinutes = 15,
+                    initialPomodorosPerSet = 4,
+                )
             ),
             savedStateHandle = SavedStateHandle()
         )
@@ -62,70 +73,172 @@ class TimerViewModelTest {
     }
 
     @Test
-    fun pomodoroTimerState_hasCorrectDefaultValues() {
-        assertThat(viewModel.pomodoroTimerState.getOrAwaitValue()).isEqualTo(
+    fun pomodoroTimerState_hasCorrectDefaultValues() = testScope.runTest {
+        runCurrent()
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue()).isEqualTo(
             defaultTimerState
         )
     }
 
     @Test
     fun showResetTimerConfirmationDialog_defaultValueFalse() {
-        assertThat(viewModel.screenState.getOrAwaitValue().showResetTimerConfirmationDialog).isFalse()
+        assertThat(timerViewModel.screenState.getOrAwaitValue().showResetTimerConfirmationDialog).isFalse()
     }
 
     @Test
     fun showSkipBreakConfirmationDialog_defaultValueFalse() {
-        assertThat(viewModel.screenState.getOrAwaitValue().showSkipBreakConfirmationDialog).isFalse()
+        assertThat(timerViewModel.screenState.getOrAwaitValue().showSkipBreakConfirmationDialog).isFalse()
     }
 
     @Test
     fun showResetPomodoroSetConfirmationDialog_defaultValueFalse() {
-        assertThat(viewModel.screenState.getOrAwaitValue().showResetPomodoroSetConfirmationDialog).isFalse()
+        assertThat(timerViewModel.screenState.getOrAwaitValue().showResetPomodoroSetConfirmationDialog).isFalse()
     }
 
     @Test
     fun showResetPomodoroCountConfirmationDialog_defaultValueFalse() {
-        assertThat(viewModel.screenState.getOrAwaitValue().showResetPomodoroCountConfirmationDialog).isFalse()
+        assertThat(timerViewModel.screenState.getOrAwaitValue().showResetPomodoroCountConfirmationDialog).isFalse()
     }
 
     @Test
-    fun onStartStopTimerClicked_callsRemoveTimerCompletedNotification() {
-        viewModel.onStartStopTimerClicked()
+    fun finishTimer_showsTimerCompletedNotificationForCorrectPhase() = testScope.runTest {
+        runCurrent()
+        timerViewModel.onStartStopTimerClicked()
+        advanceTimeBy(25.minutesToMilliseconds())
+        fakeTimeSource.advanceTimeBy(25.minutesToMilliseconds())
+        runCurrent()
 
-        // TODO: Should we use a fake with state instead of a mock?
-        verify { notificationHelper.removeTimerCompletedNotification() }
+        assertThat(fakeNotificationHelper.timerCompletedNotification).isEqualTo(
+            TimerCompletedNotificationState.Shown(PomodoroPhase.POMODORO)
+        )
+
+        advanceTimeBy(5.minutesToMilliseconds())
+        fakeTimeSource.advanceTimeBy(5.minutesToMilliseconds())
+        runCurrent()
+
+        assertThat(fakeNotificationHelper.timerCompletedNotification).isEqualTo(
+            TimerCompletedNotificationState.Shown(PomodoroPhase.SHORT_BREAK)
+        )
+
+        repeat(2) {
+            advanceTimeBy(25.minutesToMilliseconds())
+            fakeTimeSource.advanceTimeBy(25.minutesToMilliseconds())
+            runCurrent()
+            advanceTimeBy(5.minutesToMilliseconds())
+            fakeTimeSource.advanceTimeBy(5.minutesToMilliseconds())
+            runCurrent()
+        }
+
+        advanceTimeBy(25.minutesToMilliseconds())
+        fakeTimeSource.advanceTimeBy(25.minutesToMilliseconds())
+        runCurrent()
+        advanceTimeBy(15.minutesToMilliseconds())
+        fakeTimeSource.advanceTimeBy(15.minutesToMilliseconds())
+        runCurrent()
+
+        assertThat(fakeNotificationHelper.timerCompletedNotification).isEqualTo(
+            TimerCompletedNotificationState.Shown(PomodoroPhase.LONG_BREAK)
+        )
+
+        timerViewModel.onStartStopTimerClicked()
     }
 
     @Test
-    fun onStartStopTimerClicked_timerNotRunning_callsRemoveResumeTimerNotification() {
+    fun onStartStopTimerClicked_removesTimerCompletedNotification() = testScope.runTest {
+        runCurrent()
+        timerViewModel.onStartStopTimerClicked()
+        advanceTimeBy(25.minutesToMilliseconds())
+        fakeTimeSource.advanceTimeBy(25.minutesToMilliseconds())
+        runCurrent()
+        timerViewModel.onStartStopTimerClicked()
+
+        assertThat(fakeNotificationHelper.timerCompletedNotification).isEqualTo(
+            TimerCompletedNotificationState.NotShown
+        )
+    }
+
+    @Test
+    fun onStartStopTimerClicked_timerRunning_showsResumeTimerNotificationWithCorrectValues() {
+        // TODO: 10/01/2022 Doesn't work right now because BroadcastReceiver shows the notification
+        /*viewModel.onStartStopTimerClicked()
         viewModel.onStartStopTimerClicked()
 
-        verify { notificationHelper.removeResumeTimerNotification() }
+        assertThat(fakeNotificationHelper.resumeTimerNotification).isEqualTo(
+            ResumeTimerNotificationState.Shown(
+                defaultTimerState.currentPhase,
+                defaultTimerState.timeLeftInMillis,
+                defaultTimerState.timerRunning
+            )
+        )*/
+    }
+
+    @Test
+    fun onStartStopTimerClicked_timerNotRunning_removesResumeTimerNotification() {
+        fakeNotificationHelper.showResumeTimerNotification(
+            currentPhase = defaultTimerState.currentPhase,
+            timeLeftInMillis = defaultTimerState.timeLeftInMillis,
+        )
+        timerViewModel.onStartStopTimerClicked()
+
+        assertThat(fakeNotificationHelper.resumeTimerNotification).isEqualTo(
+            ResumeTimerNotificationState.NotShown
+        )
+    }
+
+    @Test
+    fun onStartStopTimerClicked_timerNotRunning_startsTimerService() {
+        timerViewModel.onStartStopTimerClicked()
+
+        assertThat(fakeTimerServiceManager.serviceRunning).isTrue()
     }
 
     @Test
     fun onStartStopTimerClicked_timerNotRunning_setsTimerRunningTrue() {
-        viewModel.onStartStopTimerClicked()
+        timerViewModel.onStartStopTimerClicked()
 
-        assertThat(viewModel.pomodoroTimerState.getOrAwaitValue().timerRunning).isTrue()
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue().timerRunning).isTrue()
+    }
+
+    @Test
+    fun onStartStopTimerClicked_timerRunning_cancelsTimer() = testScope.runTest {
+        runCurrent()
+        timerViewModel.onStartStopTimerClicked()
+        timerViewModel.onStartStopTimerClicked()
+
+        advanceTimeBy(5000)
+        fakeTimeSource.advanceTimeBy(5000)
+        runCurrent()
+
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue().timeLeftInMillis).isEqualTo(
+            defaultTimerState.timeLeftInMillis
+        )
+    }
+
+    @Test
+    fun onStartStopTimerClicked_timerRunning_stopsTimerService() {
+        timerViewModel.onStartStopTimerClicked()
+        timerViewModel.onStartStopTimerClicked()
+
+        assertThat(fakeTimerServiceManager.serviceRunning).isFalse()
     }
 
     @Test
     fun onStartStopTimerClicked_timerRunning_setsTimerRunningFalse() {
-        viewModel.onStartStopTimerClicked()
-        viewModel.onStartStopTimerClicked()
+        timerViewModel.onStartStopTimerClicked()
+        timerViewModel.onStartStopTimerClicked()
 
-        assertThat(viewModel.pomodoroTimerState.getOrAwaitValue().timerRunning).isFalse()
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue().timerRunning).isFalse()
     }
 
     @Test
     fun onStartStopTimerClicked_timerNotRunningAndPomodoroTargetReached_resetsPomodoroCounter() =
         testScope.runTest {
-            viewModel.onStartStopTimerClicked()
+            runCurrent()
+            timerViewModel.onStartStopTimerClicked()
 
             repeat(3) {
-               advanceTimeBy(25.minutesToMilliseconds())
-               fakeTimeSource.advanceTimeBy(25.minutesToMilliseconds())
+                advanceTimeBy(25.minutesToMilliseconds())
+                fakeTimeSource.advanceTimeBy(25.minutesToMilliseconds())
                 runCurrent()
                 advanceTimeBy(5.minutesToMilliseconds())
                 fakeTimeSource.advanceTimeBy(5.minutesToMilliseconds())
@@ -138,19 +251,341 @@ class TimerViewModelTest {
             fakeTimeSource.advanceTimeBy(15.minutesToMilliseconds())
             runCurrent()
 
-            viewModel.onStartStopTimerClicked()
+            timerViewModel.onStartStopTimerClicked()
 
-            assertThat(viewModel.pomodoroTimerState.getOrAwaitValue().pomodorosCompletedInSet).isEqualTo(
+            assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue().pomodorosCompletedInSet).isEqualTo(
                 0
             )
         }
+
+    @Test
+    fun onResetTimerClicked_showsResetTimerConfirmationDialog() {
+        timerViewModel.onResetTimerClicked()
+
+        assertThat(timerViewModel.screenState.getOrAwaitValue().showResetTimerConfirmationDialog).isTrue()
+    }
+
+    @Test
+    fun onResetTimerDialogDismissed_hidesResetTimerConfirmationDialog() {
+        timerViewModel.onResetTimerClicked()
+        timerViewModel.onResetTimerDialogDismissed()
+
+        assertThat(timerViewModel.screenState.getOrAwaitValue().showResetTimerConfirmationDialog).isFalse()
+    }
+
+    @Test
+    fun onResetTimerConfirmed_hidesResetTimerConfirmationDialog() {
+        timerViewModel.onResetTimerClicked()
+        timerViewModel.onResetTimerConfirmed()
+
+        assertThat(timerViewModel.screenState.getOrAwaitValue().showResetTimerConfirmationDialog).isFalse()
+    }
+
+    @Test
+    fun onResetTimerConfirmed_cancelsTimer() = testScope.runTest {
+        runCurrent()
+        timerViewModel.onStartStopTimerClicked()
+        timerViewModel.onResetTimerClicked()
+        timerViewModel.onResetTimerConfirmed()
+
+        advanceTimeBy(5000)
+        fakeTimeSource.advanceTimeBy(5000)
+        runCurrent()
+
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue().timeLeftInMillis).isEqualTo(
+            defaultTimerState.timeLeftInMillis
+        )
+    }
+
+    @Test
+    fun onResetTimerConfirmed_stopsTimerService() {
+        timerViewModel.onStartStopTimerClicked()
+        timerViewModel.onResetTimerClicked()
+        timerViewModel.onResetTimerConfirmed()
+
+        assertThat(fakeTimerServiceManager.serviceRunning).isFalse()
+    }
+
+    @Test
+    fun onResetTimerConfirmed_setsTimerRunningFalse() {
+        timerViewModel.onStartStopTimerClicked()
+        timerViewModel.onResetTimerClicked()
+        timerViewModel.onResetTimerConfirmed()
+
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue().timerRunning).isFalse()
+    }
+
+    @Test
+    fun onResetTimerConfirmed_keepsCurrentPhase() {
+        timerViewModel.onStartStopTimerClicked()
+        timerViewModel.onResetTimerClicked()
+        timerViewModel.onResetTimerConfirmed()
+
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue().currentPhase).isEqualTo(
+            defaultTimerState.currentPhase
+        )
+    }
+
+    @Test
+    fun onResetTimerConfirmed_resetsTimeTargetToCorrectValue() {
+        timerViewModel.onStartStopTimerClicked()
+        timerViewModel.onResetTimerClicked()
+        timerViewModel.onResetTimerConfirmed()
+
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue().timeTargetInMillis).isEqualTo(
+            defaultTimerState.timeTargetInMillis
+        )
+    }
+
+    @Test
+    fun onResetTimerConfirmed_resetsTimeLeftToCorrectValue() = testScope.runTest {
+        runCurrent()
+        timerViewModel.onStartStopTimerClicked()
+        advanceTimeBy(5000)
+        fakeTimeSource.advanceTimeBy(5000)
+        runCurrent()
+
+        timerViewModel.onResetTimerClicked()
+        timerViewModel.onResetTimerConfirmed()
+
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue().timeLeftInMillis).isEqualTo(
+            defaultTimerState.timeLeftInMillis
+        )
+    }
+
+    @Test
+    fun onSkipBreakClicked_showsSkipBreakConfirmationDialog() {
+        timerViewModel.onSkipBreakClicked()
+
+        assertThat(timerViewModel.screenState.getOrAwaitValue().showSkipBreakConfirmationDialog).isTrue()
+    }
+
+    @Test
+    fun onSkipBreakDialogDismissed_hidesSkipBreakConfirmationDialog() {
+        timerViewModel.onSkipBreakClicked()
+        timerViewModel.onSkipBreakDialogDismissed()
+
+        assertThat(timerViewModel.screenState.getOrAwaitValue().showSkipBreakConfirmationDialog).isFalse()
+    }
+
+    @Test
+    fun onSkipBreakConfirmed_hidesSkipBreakConfirmationDialog() {
+        timerViewModel.onSkipBreakClicked()
+        timerViewModel.onSkipBreakConfirmed()
+
+        assertThat(timerViewModel.screenState.getOrAwaitValue().showSkipBreakConfirmationDialog).isFalse()
+    }
+
+    @Test
+    fun onSkipBreakConfirmed_setsCorrectPomodoroTimerState() = testScope.runTest {
+        runCurrent()
+        timerViewModel.onStartStopTimerClicked()
+        advanceTimeBy(25.minutesToMilliseconds())
+        fakeTimeSource.advanceTimeBy(25.minutesToMilliseconds())
+        runCurrent()
+
+        timerViewModel.onStartStopTimerClicked()
+        timerViewModel.onSkipBreakClicked()
+        timerViewModel.onSkipBreakConfirmed()
+        runCurrent()
+
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue()).isEqualTo(
+            PomodoroTimerState(
+                timerRunning = false,
+                currentPhase = PomodoroPhase.POMODORO,
+                timeLeftInMillis = 25.minutesToMilliseconds(),
+                timeTargetInMillis = 25.minutesToMilliseconds(),
+                pomodorosCompletedInSet = 1,
+                pomodorosPerSetTarget = defaultTimerState.pomodorosPerSetTarget,
+                pomodorosCompletedTotal = 1,
+            )
+        )
+    }
+
+    @Test
+    fun onSkipBreakConfirmed_timerNotRunning_keepsTimerNotRunning() = testScope.runTest {
+        runCurrent()
+        timerViewModel.onStartStopTimerClicked()
+        advanceTimeBy(25.minutesToMilliseconds())
+        fakeTimeSource.advanceTimeBy(25.minutesToMilliseconds())
+        runCurrent()
+
+        timerViewModel.onStartStopTimerClicked()
+        timerViewModel.onSkipBreakClicked()
+        timerViewModel.onSkipBreakConfirmed()
+        advanceTimeBy(5000)
+        fakeTimeSource.advanceTimeBy(5000)
+        runCurrent()
+
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue().timeLeftInMillis).isEqualTo(
+            25.minutesToMilliseconds()
+        )
+    }
+
+    @Test
+    fun onSkipBreakConfirmed_timerRunning_keepsTimerRunning() = testScope.runTest {
+        runCurrent()
+        timerViewModel.onStartStopTimerClicked()
+        advanceTimeBy(25.minutesToMilliseconds())
+        fakeTimeSource.advanceTimeBy(25.minutesToMilliseconds())
+        runCurrent()
+
+        timerViewModel.onSkipBreakClicked()
+        timerViewModel.onSkipBreakConfirmed()
+        advanceTimeBy(5000)
+        fakeTimeSource.advanceTimeBy(5000)
+        runCurrent()
+
+        timerViewModel.onStartStopTimerClicked()
+
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue().timeLeftInMillis).isEqualTo(
+            25.minutesToMilliseconds() - 5000L
+        )
+    }
+
+    @Test
+    fun onSkipBreakConfirmed_currentPhasePomodoro_keepsCorrectTimerState() = testScope.runTest {
+        runCurrent()
+        timerViewModel.onSkipBreakClicked()
+        timerViewModel.onSkipBreakConfirmed()
+        runCurrent()
+
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue()).isEqualTo(
+            PomodoroTimerState(
+                timerRunning = false,
+                currentPhase = PomodoroPhase.POMODORO,
+                timeLeftInMillis = 25.minutesToMilliseconds(),
+                timeTargetInMillis = 25.minutesToMilliseconds(),
+                pomodorosCompletedInSet = 0,
+                pomodorosPerSetTarget = defaultTimerState.pomodorosPerSetTarget,
+                pomodorosCompletedTotal = 0,
+            )
+        )
+    }
+
+    @Test
+    fun onResetPomodoroSetClicked_showsResetPomodoroSetConfirmationDialog() {
+        timerViewModel.onResetPomodoroSetClicked()
+
+        assertThat(timerViewModel.screenState.getOrAwaitValue().showResetPomodoroSetConfirmationDialog).isTrue()
+    }
+
+    @Test
+    fun onResetPomodoroSetDialogDismissed_hidesResetPomodoroSetConfirmationDialog() {
+        timerViewModel.onResetPomodoroSetClicked()
+        timerViewModel.onResetPomodoroSetDialogDismissed()
+
+        assertThat(timerViewModel.screenState.getOrAwaitValue().showResetPomodoroSetConfirmationDialog).isFalse()
+    }
+
+    @Test
+    fun onResetPomodoroSetConfirmed_hidesResetPomodoroSetConfirmationDialog() {
+        timerViewModel.onResetPomodoroSetClicked()
+        timerViewModel.onResetPomodoroSetConfirmed()
+
+        assertThat(timerViewModel.screenState.getOrAwaitValue().showResetPomodoroSetConfirmationDialog).isFalse()
+    }
+
+    @Test
+    fun onResetPomodoroSetConfirmed_timerRunning_cancelsTimer() = testScope.runTest {
+        runCurrent()
+        timerViewModel.onStartStopTimerClicked()
+        timerViewModel.onResetPomodoroSetClicked()
+        timerViewModel.onResetPomodoroSetConfirmed()
+
+        advanceTimeBy(5000)
+        fakeTimeSource.advanceTimeBy(5000)
+        runCurrent()
+
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue().timeLeftInMillis).isEqualTo(
+            defaultTimerState.timeLeftInMillis
+        )
+    }
+
+    @Test
+    fun onResetPomodoroSetConfirmed_timerRunning_stopsTimerService() {
+        timerViewModel.onStartStopTimerClicked()
+        timerViewModel.onResetPomodoroSetClicked()
+        timerViewModel.onResetPomodoroSetConfirmed()
+
+        assertThat(fakeTimerServiceManager.serviceRunning).isFalse()
+    }
+
+    @Test
+    fun onResetPomodoroSetConfirmed_timerRunning_setsTimerRunningFalse() {
+        timerViewModel.onStartStopTimerClicked()
+        timerViewModel.onResetPomodoroSetClicked()
+        timerViewModel.onResetPomodoroSetConfirmed()
+
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue().timerRunning).isFalse()
+    }
+
+    @Test
+    fun onResetPomodoroSetConfirmed_setsCorrectPomodoroTimerState() = testScope.runTest {
+        runCurrent()
+        timerViewModel.onStartStopTimerClicked()
+        advanceTimeBy(25.minutesToMilliseconds())
+        fakeTimeSource.advanceTimeBy(25.minutesToMilliseconds())
+        runCurrent()
+        timerViewModel.onStartStopTimerClicked()
+
+        timerViewModel.onResetPomodoroSetClicked()
+        timerViewModel.onResetPomodoroSetConfirmed()
+        runCurrent()
+
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue()).isEqualTo(
+            defaultTimerState.copy(
+                pomodorosCompletedTotal = 1
+            )
+        )
+    }
+
+    @Test
+    fun onResetPomodoroCountClicked_showsResetPomodoroCountConfirmationDialog() {
+        timerViewModel.onResetPomodoroCountClicked()
+
+        assertThat(timerViewModel.screenState.getOrAwaitValue().showResetPomodoroCountConfirmationDialog).isTrue()
+    }
+
+    @Test
+    fun onResetPomodoroCountDialogDismissed_hidesResetPomodoroCountConfirmationDialog() {
+        timerViewModel.onResetPomodoroCountClicked()
+        timerViewModel.onResetPomodoroCountDialogDismissed()
+
+        assertThat(timerViewModel.screenState.getOrAwaitValue().showResetPomodoroCountConfirmationDialog).isFalse()
+    }
+
+    @Test
+    fun onResetPomodoroCountConfirmed_hidesResetPomodoroCountConfirmationDialog() {
+        timerViewModel.onResetPomodoroCountClicked()
+        timerViewModel.onResetPomodoroCountConfirmed()
+
+        assertThat(timerViewModel.screenState.getOrAwaitValue().showResetPomodoroCountConfirmationDialog).isFalse()
+    }
+
+    @Test
+    fun onResetPomodoroCountConfirmed_resetsPomodorosCompletedTotal() = testScope.runTest {
+        runCurrent()
+        timerViewModel.onStartStopTimerClicked()
+        advanceTimeBy(25.minutesToMilliseconds())
+        fakeTimeSource.advanceTimeBy(25.minutesToMilliseconds())
+        runCurrent()
+        timerViewModel.onStartStopTimerClicked()
+
+        timerViewModel.onResetPomodoroCountClicked()
+        timerViewModel.onResetPomodoroCountConfirmed()
+
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue().pomodorosCompletedTotal).isEqualTo(
+            0
+        )
+    }
 
     companion object {
         private val defaultTimerState = PomodoroTimerState(
             timerRunning = false,
             currentPhase = PomodoroPhase.POMODORO,
-            timeLeftInMillis = 25 * 60 * 1_000L,
-            timeTargetInMillis = 25 * 60 * 1_000L,
+            timeLeftInMillis = 25.minutesToMilliseconds(),
+            timeTargetInMillis = 25.minutesToMilliseconds(),
             pomodorosCompletedInSet = 0,
             pomodorosPerSetTarget = 4,
             pomodorosCompletedTotal = 0,

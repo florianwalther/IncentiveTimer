@@ -1,7 +1,7 @@
 package com.florianwalther.incentivetimer.features.settings
 
 import androidx.lifecycle.*
-import com.florianwalther.incentivetimer.data.preferences.PreferencesManager
+import com.florianwalther.incentivetimer.data.preferences.DefaultPreferencesManager
 import com.florianwalther.incentivetimer.features.settings.model.SettingsScreenState
 import com.zhuinden.flowcombinetuplekt.combineTuple
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,7 +11,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val preferencesManager: PreferencesManager,
+    private val preferencesManager: DefaultPreferencesManager,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel(), SettingsScreenActions {
 

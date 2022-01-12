@@ -100,6 +100,14 @@ class AddEditRewardViewModelTestWithoutRewardId {
     }
 
     @Test
+    fun onRewardIconSelected_hidesRewardIconSelectionDialog() {
+        viewModel.onRewardIconButtonClicked()
+        viewModel.onRewardIconSelected(IconKey.BEVERAGE)
+
+        assertThat(viewModel.screenState.getOrAwaitValue().showRewardIconSelectionDialog).isFalse()
+    }
+
+    @Test
     fun onRewardIconButtonClicked_showsRewardIconSelectionDialog() {
         viewModel.onRewardIconButtonClicked()
 

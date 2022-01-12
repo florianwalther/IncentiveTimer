@@ -71,7 +71,7 @@ class AddEditRewardViewModel @Inject constructor(
     }
 
     init {
-        if (!savedStateHandle.contains("rewardLiveData")) {
+        if (!savedStateHandle.contains(KEY_REWARD_LIVE_DATA)) {
             if (rewardId != null && isEditMode) {
                 viewModelScope.launch {
                     rewardInput.value = rewardDao.getRewardById(rewardId).firstOrNull()
@@ -106,6 +106,7 @@ class AddEditRewardViewModel @Inject constructor(
 
     override fun onRewardIconSelected(iconKey: IconKey) {
         rewardInput.value = rewardInput.value?.copy(iconKey = iconKey)
+        showRewardIconSelectionDialog.value = false
     }
 
     override fun onRewardIconButtonClicked() {

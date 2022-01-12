@@ -31,12 +31,13 @@ class CountDownTimer @Inject constructor(
         timerJob = scope.launch {
             while (true) {
                 if (timeSource.elapsedRealTime < targetTime) {
-                    println("elapsedRealTime = ${timeSource.elapsedRealTime}")
                     delay(minOf(countDownInterval, durationMillis))
                     millisUntilFinished = targetTime - timeSource.elapsedRealTime
+                    println("elapsedRealtime = ${timeSource.elapsedRealTime}")
+                    println("targetTime = ${targetTime}")
                     onTick(millisUntilFinished)
                 } else {
-                    println("onFinish")
+                    println("onFinish targetTime = $targetTime")
                     onFinish()
                     break
                 }

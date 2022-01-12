@@ -177,7 +177,6 @@ private fun RewardIconSelectionDialog(
                 IconKey.values().forEach { iconKey ->
                     IconButton(onClick = {
                         onIconSelected(iconKey)
-                        onDismissRequest()
                     }) {
                         Icon(
                             imageVector = iconKey.rewardIcon,
