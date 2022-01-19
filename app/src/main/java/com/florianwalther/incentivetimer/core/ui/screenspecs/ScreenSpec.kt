@@ -14,6 +14,7 @@ sealed interface ScreenSpec {
         val allScreens = listOf<ScreenSpec>(
             TimerScreenSpec,
             RewardListScreenSpec,
+            StatisticsScreenSpec,
             SettingsScreenSpec,
             AddEditRewardScreenSpec,
         ).associateBy { it.navHostRoute }

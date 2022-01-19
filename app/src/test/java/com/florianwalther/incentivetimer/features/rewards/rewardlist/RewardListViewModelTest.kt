@@ -4,7 +4,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.florianwalther.incentivetimer.core.ui.defaultRewardIconKey
-import com.florianwalther.incentivetimer.data.FakeRewardDao
+import com.florianwalther.incentivetimer.data.db.FakeRewardDao
 import com.florianwalther.incentivetimer.data.db.Reward
 import com.florianwalther.incentivetimer.getOrAwaitValue
 import com.google.common.truth.Truth.assertThat
@@ -43,17 +43,17 @@ class RewardListViewModelTest {
     )
 
     private val data = linkedMapOf<Long, Reward>(
-        1L to reward1,
-        2L to reward2,
-        3L to reward3
+        reward1.id to reward1,
+        reward2.id to reward2,
+        reward3.id to reward3
     )
 
-    private lateinit var viewModel: RewardListViewModel
+    private lateinit var rewardListViewModel: RewardListViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        viewModel = RewardListViewModel(
+        rewardListViewModel = RewardListViewModel(
             rewardDao = FakeRewardDao(data),
             savedStateHandle = SavedStateHandle(),
         )
@@ -66,31 +66,31 @@ class RewardListViewModelTest {
 
     @Test
     fun rewards_sortedByIsUnlockedDesc() = runTest {
-        val data = viewModel.screenState.getOrAwaitValue().rewards
+        val data = rewardListViewModel.screenState.getOrAwaitValue().rewards
 
         assertThat(data).containsExactly(reward3, reward1, reward2).inOrder()
     }
 
     @Test
     fun multiSelectionModeActive_defaultValueFalse() {
-        assertThat(viewModel.screenState.getOrAwaitValue().multiSelectionModeActive).isFalse()
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().multiSelectionModeActive).isFalse()
     }
 
     @Test
     fun showDeleteAllSelectedRewardsDialog_defaultValueFalse() {
-        assertThat(viewModel.screenState.getOrAwaitValue().showDeleteAllSelectedRewardsDialog).isFalse()
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().showDeleteAllSelectedRewardsDialog).isFalse()
     }
 
     @Test
     fun showDeleteAllUnlockedRewardsDialog_defaultValueFalse() {
-        assertThat(viewModel.screenState.getOrAwaitValue().showDeleteAllUnlockedRewardsDialog).isFalse()
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().showDeleteAllUnlockedRewardsDialog).isFalse()
     }
 
     @Test
     fun onRewardClicked_multiSelectionModeInactive_sendNavigateToEditRewardScreenEvent() = runTest {
-        viewModel.onRewardClicked(reward1)
+        rewardListViewModel.onRewardClicked(reward1)
 
-        viewModel.events.test {
+        rewardListViewModel.events.test {
             assertThat(awaitItem()).isEqualTo(
                 RewardListViewModel.RewardListEvent.NavigateToEditRewardScreen(reward1)
             )
@@ -99,153 +99,153 @@ class RewardListViewModelTest {
 
     @Test
     fun onRewardClicked_multiSelectionModeActiveAndRewardNotSelected_selectsReward() = runTest {
-        viewModel.onRewardLongClicked(reward1)
-        viewModel.onRewardClicked(reward2)
+        rewardListViewModel.onRewardLongClicked(reward1)
+        rewardListViewModel.onRewardClicked(reward2)
 
-        assertThat(viewModel.screenState.getOrAwaitValue().selectedRewardIds).containsExactly(reward1.id, reward2.id)
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().selectedRewardIds).containsExactly(reward1.id, reward2.id)
     }
 
     @Test
     fun onRewardClicked_multiSelectionModeActiveAndRewardSelected_unselectsReward() = runTest {
-        viewModel.onRewardLongClicked(reward1)
-        viewModel.onRewardClicked(reward2)
-        viewModel.onRewardClicked(reward2)
+        rewardListViewModel.onRewardLongClicked(reward1)
+        rewardListViewModel.onRewardClicked(reward2)
+        rewardListViewModel.onRewardClicked(reward2)
 
-        assertThat(viewModel.screenState.getOrAwaitValue().selectedRewardIds).containsExactly(reward1.id)
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().selectedRewardIds).containsExactly(reward1.id)
     }
 
     @Test
     fun onRewardClicked_lastSelectedReward_cancelsMultiSelectionMode() = runTest {
-        viewModel.onRewardLongClicked(reward1)
-        viewModel.onRewardClicked(reward1)
+        rewardListViewModel.onRewardLongClicked(reward1)
+        rewardListViewModel.onRewardClicked(reward1)
 
-        assertThat(viewModel.screenState.getOrAwaitValue().multiSelectionModeActive).isFalse()
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().multiSelectionModeActive).isFalse()
     }
 
     @Test
     fun onCancelMultiSelectionModeClicked_cancelsMultiSelectionMode() {
-        viewModel.onRewardLongClicked(reward1)
+        rewardListViewModel.onRewardLongClicked(reward1)
 
-        viewModel.onCancelMultiSelectionModeClicked()
+        rewardListViewModel.onCancelMultiSelectionModeClicked()
 
-        assertThat(viewModel.screenState.getOrAwaitValue().multiSelectionModeActive).isFalse()
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().multiSelectionModeActive).isFalse()
     }
 
     @Test
     fun onCancelMultiSelectionModeClicked_clearsSelectedRewardsList() {
-        viewModel.onRewardLongClicked(reward1)
+        rewardListViewModel.onRewardLongClicked(reward1)
 
-        viewModel.onCancelMultiSelectionModeClicked()
+        rewardListViewModel.onCancelMultiSelectionModeClicked()
 
-        assertThat(viewModel.screenState.getOrAwaitValue().selectedRewardIds).isEmpty()
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().selectedRewardIds).isEmpty()
     }
 
     @Test
     fun onRewardLongClicked_multiSelectionModeInActive_activatesMultiSelectionMode() {
-        viewModel.onRewardLongClicked(reward1)
+        rewardListViewModel.onRewardLongClicked(reward1)
 
-        assertThat(viewModel.screenState.getOrAwaitValue().multiSelectionModeActive).isTrue()
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().multiSelectionModeActive).isTrue()
     }
 
     @Test
     fun onRewardLongClicked_multiSelectionModeInActiveAndRewardNotSelect_selectsClickedReward() {
-        viewModel.onRewardLongClicked(reward1)
+        rewardListViewModel.onRewardLongClicked(reward1)
 
-        assertThat(viewModel.screenState.getOrAwaitValue().selectedRewardIds).containsExactly(reward1.id)
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().selectedRewardIds).containsExactly(reward1.id)
     }
 
     @Test
     fun onRewardLongClicked_multiSelectionModeInActiveAndRewardSelect_selectsClickedReward() {
-        viewModel.onRewardLongClicked(reward1)
-        viewModel.onRewardLongClicked(reward2)
+        rewardListViewModel.onRewardLongClicked(reward1)
+        rewardListViewModel.onRewardLongClicked(reward2)
 
-        assertThat(viewModel.screenState.getOrAwaitValue().selectedRewardIds).containsExactly(reward1.id, reward2.id)
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().selectedRewardIds).containsExactly(reward1.id, reward2.id)
     }
 
     @Test
     fun selectedItemCount_returnsCorrectValue() {
-        viewModel.onRewardLongClicked(reward1)
+        rewardListViewModel.onRewardLongClicked(reward1)
 
-        assertThat(viewModel.screenState.getOrAwaitValue().selectedItemCount).isEqualTo(1)
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().selectedItemCount).isEqualTo(1)
     }
 
     @Test
     fun onDeleteAllSelectedRewardsClicked_showsDeleteAllSelectedRewardsDialog() {
-        viewModel.onDeleteAllSelectedItemsClicked()
+        rewardListViewModel.onDeleteAllSelectedItemsClicked()
 
-        assertThat(viewModel.screenState.getOrAwaitValue().showDeleteAllSelectedRewardsDialog).isTrue()
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().showDeleteAllSelectedRewardsDialog).isTrue()
     }
 
     @Test
     fun onDeleteAllSelectedRewardsConfirmed_hidesDeleteAllSelectedRewardsDialog() {
-        viewModel.onDeleteAllSelectedItemsClicked()
-        viewModel.onDeleteAllSelectedRewardsConfirmed()
+        rewardListViewModel.onDeleteAllSelectedItemsClicked()
+        rewardListViewModel.onDeleteAllSelectedRewardsConfirmed()
 
-        assertThat(viewModel.screenState.getOrAwaitValue().showDeleteAllSelectedRewardsDialog).isFalse()
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().showDeleteAllSelectedRewardsDialog).isFalse()
     }
 
     @Test
     fun onDeleteAllSelectedRewardsConfirmed_deletesAllSelectedRewards() {
-        viewModel.onRewardLongClicked(reward1)
+        rewardListViewModel.onRewardLongClicked(reward1)
 
-        viewModel.onDeleteAllSelectedItemsClicked()
-        viewModel.onDeleteAllSelectedRewardsConfirmed()
+        rewardListViewModel.onDeleteAllSelectedItemsClicked()
+        rewardListViewModel.onDeleteAllSelectedRewardsConfirmed()
 
-        assertThat(viewModel.screenState.getOrAwaitValue().rewards).containsExactly(reward2, reward3)
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().rewards).containsExactly(reward2, reward3)
     }
 
 
     @Test
     fun onDeleteAllSelectedRewardsDialogDismissed_hidesDeleteAllSelectedRewardsDialog() {
-        viewModel.onDeleteAllSelectedItemsClicked()
-        viewModel.onDeleteAllSelectedRewardsDialogDismissed()
+        rewardListViewModel.onDeleteAllSelectedItemsClicked()
+        rewardListViewModel.onDeleteAllSelectedRewardsDialogDismissed()
 
-        assertThat(viewModel.screenState.getOrAwaitValue().showDeleteAllSelectedRewardsDialog).isFalse()
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().showDeleteAllSelectedRewardsDialog).isFalse()
     }
 
     @Test
     fun onDeleteAllUnlockedRewardsClicked_showsDeleteAllUnlockedRewardsDialog() {
-        viewModel.onDeleteAllUnlockedRewardsClicked()
+        rewardListViewModel.onDeleteAllUnlockedRewardsClicked()
 
-        assertThat(viewModel.screenState.getOrAwaitValue().showDeleteAllUnlockedRewardsDialog).isTrue()
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().showDeleteAllUnlockedRewardsDialog).isTrue()
     }
 
     @Test
     fun onDeleteAllUnlockedRewardsConfirmed_hidesDeleteAllUnlockedRewardsDialog() {
-        viewModel.onDeleteAllUnlockedRewardsClicked()
-        viewModel.onDeleteAllUnlockedRewardsConfirmed()
+        rewardListViewModel.onDeleteAllUnlockedRewardsClicked()
+        rewardListViewModel.onDeleteAllUnlockedRewardsConfirmed()
 
-        assertThat(viewModel.screenState.getOrAwaitValue().showDeleteAllUnlockedRewardsDialog).isFalse()
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().showDeleteAllUnlockedRewardsDialog).isFalse()
     }
 
     @Test
     fun onDeleteAllUnlockedRewardsConfirmed_deletesAllUnlockedRewards() {
-        viewModel.onDeleteAllUnlockedRewardsClicked()
-        viewModel.onDeleteAllUnlockedRewardsConfirmed()
+        rewardListViewModel.onDeleteAllUnlockedRewardsClicked()
+        rewardListViewModel.onDeleteAllUnlockedRewardsConfirmed()
 
-        assertThat(viewModel.screenState.getOrAwaitValue().rewards).containsExactly(reward1, reward2)
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().rewards).containsExactly(reward1, reward2)
     }
 
     @Test
     fun onDeleteAllUnlockedRewardsDialogDismissed_hidesDeleteAllUnlockedRewardsDialog() {
-        viewModel.onDeleteAllUnlockedRewardsClicked()
-        viewModel.onDeleteAllUnlockedRewardsDialogDismissed()
+        rewardListViewModel.onDeleteAllUnlockedRewardsClicked()
+        rewardListViewModel.onDeleteAllUnlockedRewardsDialogDismissed()
 
-        assertThat(viewModel.screenState.getOrAwaitValue().showDeleteAllUnlockedRewardsDialog).isFalse()
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().showDeleteAllUnlockedRewardsDialog).isFalse()
     }
 
     @Test
     fun onRewardSwiped_deletesReward() = runTest {
-        viewModel.onRewardSwiped(reward1)
+        rewardListViewModel.onRewardSwiped(reward1)
 
-        assertThat(viewModel.screenState.getOrAwaitValue().rewards).containsExactly(reward3, reward2)
+        assertThat(rewardListViewModel.screenState.getOrAwaitValue().rewards).containsExactly(reward3, reward2)
     }
 
     @Test
     fun onRewardSwiped_sendsShowUndoRewardSnackbarEvent() = runTest {
-        viewModel.onRewardSwiped(reward1)
+        rewardListViewModel.onRewardSwiped(reward1)
 
-        viewModel.events.test {
+        rewardListViewModel.events.test {
             assertThat(awaitItem()).isEqualTo(
                 RewardListViewModel.RewardListEvent.ShowUndoRewardSnackbar(
                     reward1
@@ -256,10 +256,10 @@ class RewardListViewModelTest {
 
     @Test
     fun onUndoDeleteRewardConfirmed_insertsReward() = runTest {
-        viewModel.onRewardSwiped(reward1)
-        viewModel.onUndoDeleteRewardConfirmed(reward1)
+        rewardListViewModel.onRewardSwiped(reward1)
+        rewardListViewModel.onUndoDeleteRewardConfirmed(reward1)
 
-        val data = viewModel.screenState.getOrAwaitValue().rewards
+        val data = rewardListViewModel.screenState.getOrAwaitValue().rewards
         assertThat(data).containsExactly(reward3, reward1, reward2)
     }
 }

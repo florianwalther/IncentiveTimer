@@ -1,5 +1,8 @@
 package com.florianwalther.incentivetimer.core.util
 
+import java.text.DateFormat
+import java.util.*
+
 fun formatMillisecondsToTimeString(milliseconds: Long): String {
     val secondsAdjusted = (milliseconds + 999) / 1000
     val s = secondsAdjusted % 60
@@ -13,3 +16,5 @@ fun formatMillisecondsToTimeString(milliseconds: Long): String {
 }
 
 fun Int.minutesToMilliseconds(): Long = this * 60_000L
+
+fun Long.millisecondsToMinutes(): Int = (this / 60_000L).toInt()

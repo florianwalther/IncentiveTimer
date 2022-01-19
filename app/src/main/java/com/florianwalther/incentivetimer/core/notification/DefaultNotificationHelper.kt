@@ -95,7 +95,7 @@ class DefaultNotificationHelper @Inject constructor(
 
         val notificationUpdate = getBaseTimerServiceNotification()
             .setContentTitle(title)
-            .setContentText(timeLeftInMillis.toString())
+            .setContentText(formatMillisecondsToTimeString(timeLeftInMillis))
             .addAction(
                 R.drawable.ic_play,
                 applicationContext.getString(R.string.resume),

@@ -68,4 +68,15 @@
     <string name="reset">Reset</string>
     <string name="minutes_placeholder">%d min</string>
     <string name="number_of_pomodoros_before_long_break"># of Pomodoros before long break</string>
+    <string name="statistics">Statistics</string>
+    <string name="pomodoro_minutes_completed">Pomodoro minutes completed</string>
+    <string name="no_data_text_daily_pomodoro_statistics">No data yet. Your pomodoro statistics will show up here.</string>
+    <string name="min">min</string>
+    <string name="drop_down_menu_button_empty_options">No options available</string>
+    <string name="last_7_days">Last 7 days</string>
+    <string name="all_time">All time</string>
+    <string name="last_14_days">Last 14 days</string>
+    <string name="last_30_days">Last 30 days</string>
+    <string name="reset_statistics">Reset statistics</string>
+    <string name="reset_pomodoro_statistics_confirmation_message">Do you really want to delete all previous Pomodoro statistics?</string>
 </resources>

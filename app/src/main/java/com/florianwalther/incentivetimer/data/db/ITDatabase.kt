@@ -10,10 +10,12 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Provider
 
-@Database(entities = [Reward::class], version = 1)
+@Database(entities = [Reward::class, PomodoroStatistic::class], version = 1)
 abstract class ITDatabase : RoomDatabase() {
 
     abstract fun rewardDao(): RewardDao
+
+    abstract fun pomodoroStatisticDao(): PomodoroStatisticDao
 
     class Callback @Inject constructor(
         private val database: Provider<ITDatabase>,

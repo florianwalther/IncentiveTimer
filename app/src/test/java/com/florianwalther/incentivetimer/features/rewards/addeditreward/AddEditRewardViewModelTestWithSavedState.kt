@@ -4,10 +4,9 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.SavedStateHandle
 import com.florianwalther.incentivetimer.core.ui.IconKey
 import com.florianwalther.incentivetimer.core.ui.defaultRewardIconKey
-import com.florianwalther.incentivetimer.data.FakeRewardDao
+import com.florianwalther.incentivetimer.data.db.FakeRewardDao
 import com.florianwalther.incentivetimer.data.db.Reward
 import com.florianwalther.incentivetimer.getOrAwaitValue
-import com.google.common.truth.Truth
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.UnconfinedTestDispatcher

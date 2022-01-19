@@ -6,7 +6,8 @@ import com.florianwalther.incentivetimer.core.notification.FakeNotificationHelpe
 import com.florianwalther.incentivetimer.core.notification.ResumeTimerNotificationState
 import com.florianwalther.incentivetimer.core.notification.TimerCompletedNotificationState
 import com.florianwalther.incentivetimer.core.util.minutesToMilliseconds
-import com.florianwalther.incentivetimer.data.FakeRewardDao
+import com.florianwalther.incentivetimer.data.db.FakePomodoroStatisticDao
+import com.florianwalther.incentivetimer.data.db.FakeRewardDao
 import com.florianwalther.incentivetimer.data.preferences.FakePreferencesManager
 import com.florianwalther.incentivetimer.features.rewards.RewardUnlockManager
 import com.florianwalther.incentivetimer.getOrAwaitValue
@@ -39,7 +40,6 @@ class TimerViewModelTest {
 
     @Before
     fun setUp() {
-        MockKAnnotations.init(this, relaxUnitFun = true)
         Dispatchers.setMain(UnconfinedTestDispatcher(testScope.testScheduler))
         fakeTimerServiceManager = FakeTimerServiceManager()
         fakeNotificationHelper = FakeNotificationHelper()
@@ -61,7 +61,8 @@ class TimerViewModelTest {
                     initialShortBreakLengthInMinutes = 5,
                     initialLongBreakLengthInMinutes = 15,
                     initialPomodorosPerSet = 4,
-                )
+                ),
+                pomodoroStatisticDao = FakePomodoroStatisticDao()
             ),
             savedStateHandle = SavedStateHandle()
         )

@@ -1,7 +1,5 @@
-package com.florianwalther.incentivetimer.data
+package com.florianwalther.incentivetimer.data.db
 
-import com.florianwalther.incentivetimer.data.db.Reward
-import com.florianwalther.incentivetimer.data.db.RewardDao
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map

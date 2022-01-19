@@ -5,7 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.florianwalther.incentivetimer.core.ui.IconKey
 import com.florianwalther.incentivetimer.core.ui.defaultRewardIconKey
-import com.florianwalther.incentivetimer.data.FakeRewardDao
+import com.florianwalther.incentivetimer.data.db.FakeRewardDao
 import com.florianwalther.incentivetimer.data.db.Reward
 import com.florianwalther.incentivetimer.getOrAwaitValue
 import com.google.common.truth.Truth.assertThat

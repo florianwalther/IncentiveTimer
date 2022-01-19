@@ -113,6 +113,9 @@ dependencies {
     // Zhuinden flow-combinetuple
     implementation 'com.github.Zhuinden:flow-combinetuple-kt:1.1.1'
 
+    // MPAndroidChart
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+
     // Testing dependencies
 
     // Default dependencies

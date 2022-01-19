@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -28,6 +29,10 @@ import com.florianwalther.incentivetimer.core.ui.theme.PrimaryLightAlpha
 import com.florianwalther.incentivetimer.core.util.formatMillisecondsToTimeString
 import com.florianwalther.incentivetimer.core.util.minutesToMilliseconds
 import com.florianwalther.incentivetimer.features.timer.model.TimerScreenState
+import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
+import com.google.accompanist.flowlayout.FlowRow
+import com.google.accompanist.flowlayout.MainAxisAlignment
+import com.google.accompanist.flowlayout.SizeMode
 
 @Composable
 fun TimerScreenAppBar(
@@ -104,8 +109,8 @@ fun TimerScreenContent(
 
     if (screenState.showResetTimerConfirmationDialog) {
         SimpleConfirmationDialog(
-            text = R.string.reset_timer_confirmation_message,
             title = R.string.reset_timer,
+            text = R.string.reset_timer_confirmation_message,
             confirmButtonText = R.string.reset_timer,
             dismissAction = actions::onResetTimerDialogDismissed,
             confirmAction = actions::onResetTimerConfirmed,
@@ -114,8 +119,8 @@ fun TimerScreenContent(
 
     if (screenState.showSkipBreakConfirmationDialog) {
         SimpleConfirmationDialog(
-            text = R.string.skip_break_confirmation_message,
             title = R.string.skip_break,
+            text = R.string.skip_break_confirmation_message,
             confirmButtonText = R.string.skip_break,
             dismissAction = actions::onSkipBreakDialogDismissed,
             confirmAction = actions::onSkipBreakConfirmed,
@@ -124,8 +129,8 @@ fun TimerScreenContent(
 
     if (screenState.showResetPomodoroSetConfirmationDialog) {
         SimpleConfirmationDialog(
-            text = R.string.reset_pomodoro_set_confirmation_message,
             title = R.string.reset_pomodoro_set,
+            text = R.string.reset_pomodoro_set_confirmation_message,
             confirmButtonText = R.string.reset_pomodoro_set,
             dismissAction = actions::onResetPomodoroSetDialogDismissed,
             confirmAction = actions::onResetPomodoroSetConfirmed,
@@ -134,8 +139,8 @@ fun TimerScreenContent(
 
     if (screenState.showResetPomodoroCountConfirmationDialog) {
         SimpleConfirmationDialog(
-            text = R.string.reset_pomodoro_count_confirmation_message,
             title = R.string.reset_pomodoro_count,
+            text = R.string.reset_pomodoro_count_confirmation_message,
             confirmButtonText = R.string.reset_pomodoro_count,
             dismissAction = actions::onResetPomodoroCountDialogDismissed,
             confirmAction = actions::onResetPomodoroCountConfirmed,
@@ -230,16 +235,19 @@ private fun PomodorosCompletedIndicatorRow(
 ) {
     val pomodoroInProgress = timerRunning && currentPhase == PomodoroPhase.POMODORO
 
-    Row(modifier) {
+    FlowRow(
+        modifier.width(100.dp),
+        crossAxisSpacing = 4.dp,
+        crossAxisAlignment = FlowCrossAxisAlignment.Center,
+        mainAxisAlignment = MainAxisAlignment.Center,
+        mainAxisSpacing = 4.dp
+    ) {
         repeat(pomodorosPerSetTarget) { index ->
             key(index) {
                 SinglePomodoroCompletedIndicator(
                     completed = pomodorosCompletedInSet > index,
                     inProgress = pomodoroInProgress && pomodorosCompletedInSet == index
                 )
-                if (index < pomodorosPerSetTarget - 1) {
-                    Spacer(modifier = Modifier.width(4.dp))
-                }
             }
         }
     }

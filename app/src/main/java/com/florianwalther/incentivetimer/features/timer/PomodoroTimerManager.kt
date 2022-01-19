@@ -3,7 +3,10 @@ package com.florianwalther.incentivetimer.features.timer
 import androidx.annotation.StringRes
 import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.core.notification.NotificationHelper
+import com.florianwalther.incentivetimer.core.util.millisecondsToMinutes
 import com.florianwalther.incentivetimer.core.util.minutesToMilliseconds
+import com.florianwalther.incentivetimer.data.db.PomodoroStatistic
+import com.florianwalther.incentivetimer.data.db.PomodoroStatisticDao
 import com.florianwalther.incentivetimer.data.preferences.PreferencesManager
 import com.florianwalther.incentivetimer.di.ApplicationScope
 import com.florianwalther.incentivetimer.features.rewards.RewardUnlockManager
@@ -37,6 +40,7 @@ class PomodoroTimerManager @Inject constructor(
     private val timerServiceManager: TimerServiceManager,
     private val notificationHelper: NotificationHelper,
     private val rewardUnlockManager: RewardUnlockManager,
+    private val pomodoroStatisticDao: PomodoroStatisticDao,
     @ApplicationScope private val applicationScope: CoroutineScope,
 ) {
     private val timerPreferences = preferencesManager.timerPreferences
@@ -81,30 +85,37 @@ class PomodoroTimerManager @Inject constructor(
         applicationScope.launch {
             // TODO: 10/01/2022 Quick fix to make coroutines tests work
             //  -> replace for collect later
-            val timerPreferences = this@PomodoroTimerManager.timerPreferences.first()
-//            timerPreferences.collectLatest { timerPreferences ->
-            val currentPhase = currentPhase.value
-            val currentTimeTargetInMillis = timeTargetInMillis.value
-            val currentTimeLeftInMillis = timeLeftInMillis.value
-            val newTimeTargetInMillis =
-                timerPreferences.lengthInMinutesForPhase(currentPhase).minutesToMilliseconds()
-            if (timerPreferences.pomodorosPerSet <= pomodorosCompletedInSet.value
-                && currentPhase == PomodoroPhase.POMODORO
-            ) {
-                pomodorosCompletedInSet.value = 0
-            }
-            if (currentTimeTargetInMillis < newTimeTargetInMillis) {
-                timeLeftInMillis.value += newTimeTargetInMillis - currentTimeTargetInMillis
-            }
-            if (currentTimeLeftInMillis > newTimeTargetInMillis) {
-                val timerWasRunning = timerRunning.value
-                stopAndResetTimer()
-                if (timerWasRunning) {
-                    startTimer()
+//            val timerPreferences = this@PomodoroTimerManager.timerPreferences.first()
+            timerPreferences.collectLatest { timerPreferences ->
+                val currentPhase = currentPhase.value
+                val currentTimeTargetInMillis = timeTargetInMillis.value
+                val currentTimeLeftInMillis = timeLeftInMillis.value
+                val newTimeTargetInMillis =
+                    timerPreferences.lengthInMinutesForPhase(currentPhase).minutesToMilliseconds()
+                if (timerPreferences.pomodorosPerSet <= pomodorosCompletedInSet.value
+                    && currentPhase == PomodoroPhase.POMODORO
+                ) {
+                    pomodorosCompletedInSet.value = 0
                 }
+                val timerWasRunning = timerRunning.value
+                if (newTimeTargetInMillis > currentTimeTargetInMillis) {
+                    timer.cancelTimer()
+                    timeLeftInMillis.value += newTimeTargetInMillis - currentTimeTargetInMillis
+                    if (timerWasRunning) {
+                        startTimer()
+                    }
+                }
+                if (newTimeTargetInMillis < currentTimeTargetInMillis) {
+                    timer.cancelTimer()
+                    timeLeftInMillis.value -= currentTimeTargetInMillis - newTimeTargetInMillis
+                    if (timerWasRunning) {
+                        startTimer()
+                    } else {
+                        onTimerFinished()
+                    }
+                }
+                timeTargetInMillis.value = newTimeTargetInMillis
             }
-            timeTargetInMillis.value = newTimeTargetInMillis
-//            }
         }
     }
 
@@ -127,22 +138,34 @@ class PomodoroTimerManager @Inject constructor(
                 timeLeftInMillis.value = millisUntilFinished
             },
             onFinish = {
-                val currentPhase = currentPhase.value
-                println("onFinish phase: $currentPhase")
-                notificationHelper.showTimerCompletedNotification(currentPhase)
-                if (currentPhase == PomodoroPhase.POMODORO) {
-                    rewardUnlockManager.rollAllRewards()
-                    pomodorosCompletedTotal.value++
-                    pomodorosCompletedInSet.value++
-                }
-                applicationScope.launch {
-                    startNextPhase()
-                    startTimer()
-                }
+                onTimerFinished()
             },
         )
         timerServiceManager.startTimerService()
         timerRunning.value = true
+    }
+
+    private fun onTimerFinished() {
+        val currentPhase = currentPhase.value
+        println("onFinish phase: $currentPhase")
+        notificationHelper.showTimerCompletedNotification(currentPhase)
+        if (currentPhase == PomodoroPhase.POMODORO) {
+            pomodoroStatisticDao.insertPomodoroStatistic(
+                PomodoroStatistic(
+                    pomodoroDurationInMinutes = timeTargetInMillis.value.millisecondsToMinutes(),
+                    timestampInMilliseconds = System.currentTimeMillis(),
+                )
+            )
+            rewardUnlockManager.rollAllRewards()
+            pomodorosCompletedTotal.value++
+            pomodorosCompletedInSet.value++
+        }
+        applicationScope.launch {
+            startNextPhase()
+            if (timerRunning.value) {
+                startTimer()
+            }
+        }
     }
 
     private fun stopTimer() {

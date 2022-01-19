@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.florianwalther.incentivetimer.core.notification.DefaultNotificationHelper
 import com.florianwalther.incentivetimer.core.notification.NotificationHelper
 import com.florianwalther.incentivetimer.data.db.ITDatabase
+import com.florianwalther.incentivetimer.data.db.PomodoroStatisticDao
 import com.florianwalther.incentivetimer.data.db.RewardDao
 import com.florianwalther.incentivetimer.data.preferences.DefaultPreferencesManager
 import com.florianwalther.incentivetimer.data.preferences.PreferencesManager
@@ -29,7 +30,10 @@ import javax.inject.Singleton
 abstract class AppModule {
     companion object {
         @Provides
-        fun provideReward(db: ITDatabase): RewardDao = db.rewardDao()
+        fun provideRewardDao(db: ITDatabase): RewardDao = db.rewardDao()
+
+        @Provides
+        fun providePomodoroStatisticDao(db: ITDatabase): PomodoroStatisticDao = db.pomodoroStatisticDao()
 
         @Singleton
         @Provides
