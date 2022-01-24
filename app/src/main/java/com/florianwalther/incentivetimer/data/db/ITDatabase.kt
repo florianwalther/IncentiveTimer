@@ -5,8 +5,10 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.florianwalther.incentivetimer.di.ApplicationScope
 import com.florianwalther.incentivetimer.core.ui.IconKey
+import com.florianwalther.incentivetimer.core.util.dayAfter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Provider
 

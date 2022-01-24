@@ -3,7 +3,7 @@ package com.florianwalther.incentivetimer.core.notification
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.florianwalther.incentivetimer.features.timer.PomodoroPhase
+import com.florianwalther.incentivetimer.data.datastore.PomodoroPhase
 import com.florianwalther.incentivetimer.features.timer.PomodoroTimerManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject

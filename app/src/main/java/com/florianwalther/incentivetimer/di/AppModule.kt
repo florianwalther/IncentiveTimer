@@ -4,15 +4,14 @@ import android.app.Application
 import androidx.room.Room
 import com.florianwalther.incentivetimer.core.notification.DefaultNotificationHelper
 import com.florianwalther.incentivetimer.core.notification.NotificationHelper
+import com.florianwalther.incentivetimer.data.datastore.DefaultPomodoroTimerStateManager
 import com.florianwalther.incentivetimer.data.db.ITDatabase
 import com.florianwalther.incentivetimer.data.db.PomodoroStatisticDao
 import com.florianwalther.incentivetimer.data.db.RewardDao
-import com.florianwalther.incentivetimer.data.preferences.DefaultPreferencesManager
-import com.florianwalther.incentivetimer.data.preferences.PreferencesManager
-import com.florianwalther.incentivetimer.features.timer.DefaultTimeSource
-import com.florianwalther.incentivetimer.features.timer.DefaultTimerServiceManager
-import com.florianwalther.incentivetimer.features.timer.TimeSource
-import com.florianwalther.incentivetimer.features.timer.TimerServiceManager
+import com.florianwalther.incentivetimer.data.datastore.DefaultPreferencesManager
+import com.florianwalther.incentivetimer.data.datastore.PomodoroTimerStateManager
+import com.florianwalther.incentivetimer.data.datastore.PreferencesManager
+import com.florianwalther.incentivetimer.features.timer.*
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -33,7 +32,8 @@ abstract class AppModule {
         fun provideRewardDao(db: ITDatabase): RewardDao = db.rewardDao()
 
         @Provides
-        fun providePomodoroStatisticDao(db: ITDatabase): PomodoroStatisticDao = db.pomodoroStatisticDao()
+        fun providePomodoroStatisticDao(db: ITDatabase): PomodoroStatisticDao =
+            db.pomodoroStatisticDao()
 
         @Singleton
         @Provides
@@ -62,9 +62,12 @@ abstract class AppModule {
     abstract fun bindPreferencesManager(preferencesManager: DefaultPreferencesManager): PreferencesManager
 
     @Binds
+    abstract fun bindPomodoroTimerStateManager(pomodoroTimerManager: DefaultPomodoroTimerStateManager): PomodoroTimerStateManager
+
+    @Binds
     abstract fun bindTimerServiceManager(timerServiceManager: DefaultTimerServiceManager): TimerServiceManager
 
-   @Binds
+    @Binds
     abstract fun bindNotificationHelper(notificationHelper: DefaultNotificationHelper): NotificationHelper
 }
 

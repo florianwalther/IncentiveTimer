@@ -1,6 +1,6 @@
 package com.florianwalther.incentivetimer.features.settings.model
 
-import com.florianwalther.incentivetimer.data.preferences.TimerPreferences
+import com.florianwalther.incentivetimer.data.datastore.TimerPreferences
 
 data class SettingsScreenState(
     val timerPreferences: TimerPreferences,

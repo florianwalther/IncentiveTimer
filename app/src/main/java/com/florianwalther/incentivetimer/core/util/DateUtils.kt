@@ -2,8 +2,6 @@ package com.florianwalther.incentivetimer.core.util
 
 import java.util.*
 
-// TODO: 19/01/2022 Write unit tests for this
-
 fun Date.withOutTime(): Date {
     val calendar = Calendar.getInstance().apply {
         time = this@withOutTime

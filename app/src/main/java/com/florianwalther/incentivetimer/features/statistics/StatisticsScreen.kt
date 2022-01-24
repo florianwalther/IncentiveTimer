@@ -17,6 +17,7 @@ import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.core.ui.composables.DropdownMenuButton
 import com.florianwalther.incentivetimer.core.ui.composables.SimpleConfirmationDialog
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
+import com.florianwalther.incentivetimer.core.util.formatMinutesToTimeString
 import com.florianwalther.incentivetimer.features.statistics.model.DailyPomodoroStatistic
 import com.florianwalther.incentivetimer.features.statistics.model.StatisticsScreenState
 import com.github.mikephil.charting.charts.BarChart
@@ -73,25 +74,39 @@ fun StatisticsScreenContent(
     onBarChartZoomReset: () -> Unit,
 ) {
     Column {
-        Column(Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)) {
-            Row(
-                Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    stringResource(R.string.pomodoro_minutes_completed),
-                    Modifier.weight(1f)
-                )
-                DropdownMenuButton(
-                    optionsLabels = StatisticsGranularity.values().map { it.readableName }.toList(),
-                    selectedIndex = screenState.selectedStatisticsGranularityIndex,
-                    onOptionSelected = { selectedIndex ->
+        if (screenState.dailyPomodoroStatisticsInTimeframe.isNotEmpty()) {
+            Column(Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)) {
+                Row(
+                    Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        stringResource(R.string.pomodoro_time_completed),
+                        Modifier.weight(1f)
+                    )
+                    DropdownMenuButton(
+                        optionsLabels = StatisticsGranularity.values().map { it.readableName }
+                            .toList(),
+                        selectedIndex = screenState.selectedStatisticsGranularityIndex,
+                        onOptionSelected = { selectedIndex ->
 
-                        actions.onPomodoroMinutesCompletedGranularitySelected(StatisticsGranularity.values()[selectedIndex])
-                    },
+                            actions.onPomodoroMinutesCompletedGranularitySelected(
+                                StatisticsGranularity.values()[selectedIndex]
+                            )
+                        },
+                    )
+                }
+                val hourAbbreviation = stringResource(R.string.hours_abbreviation)
+                Text(
+                    stringResource(R.string.total) + ": ${
+                        formatMinutesToTimeString(
+                            screenState.pomodoroMinutesCompletedInTimeframe,
+                            showHoursWithoutSeconds = true
+                        )
+                    } $hourAbbreviation"
                 )
             }
-            Text(stringResource(R.string.total) + ": ${screenState.pomodoroMinutesCompletedInTimeframe}")
         }
+
         PomodoroStatisticsBarChart(
             dailyPomodoroStatistics = screenState.dailyPomodoroStatisticsInTimeframe,
             resetZoom = resetBarChartZoom,
@@ -122,7 +137,8 @@ private fun PomodoroStatisticsBarChart(
     val textSize = 12f
 
     val label = stringResource(R.string.pomodoro_minutes_completed)
-    val minAbbreviation = stringResource(R.string.min)
+    val minAbbreviation = stringResource(R.string.minutes_abbreviation)
+    val hourAbbreviation = stringResource(R.string.hours_abbreviation)
 
     AndroidView(
         modifier = modifier.fillMaxSize(),
@@ -134,8 +150,15 @@ private fun PomodoroStatisticsBarChart(
 
             val dataSetFormatter = object : ValueFormatter() {
                 override fun getBarLabel(barEntry: BarEntry?): String {
-                    val yValue = barEntry?.y?.toInt() ?: 0
-                    return "$yValue $minAbbreviation"
+                    val minutes = barEntry?.y?.toInt() ?: 0
+                    return if (minutes < 60) {
+                        "$minutes $minAbbreviation"
+                    } else {
+                        formatMinutesToTimeString(
+                            minutes,
+                            showHoursWithoutSeconds = true
+                        ) + " " + hourAbbreviation
+                    }
                 }
             }
 
@@ -200,7 +223,7 @@ private fun PomodoroStatisticsBarChart(
                 data = barData
                 setNoDataText(noDataText)
                 setNoDataTextColor(onSurfaceTextColor)
-                getPaint(Chart.PAINT_INFO).textSize = Utils.convertDpToPixel(textSize)
+                getPaint(Chart.PAINT_INFO).textSize = Utils.convertDpToPixel(14f)
                 legend.textColor = onSurfaceTextColor
                 setMaxVisibleValueCount(12)
                 isHighlightPerTapEnabled = false

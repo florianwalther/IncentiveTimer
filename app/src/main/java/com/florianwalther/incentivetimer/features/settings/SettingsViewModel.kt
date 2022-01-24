@@ -1,7 +1,7 @@
 package com.florianwalther.incentivetimer.features.settings
 
 import androidx.lifecycle.*
-import com.florianwalther.incentivetimer.data.preferences.DefaultPreferencesManager
+import com.florianwalther.incentivetimer.data.datastore.DefaultPreferencesManager
 import com.florianwalther.incentivetimer.features.settings.model.SettingsScreenState
 import com.zhuinden.flowcombinetuplekt.combineTuple
 import dagger.hilt.android.lifecycle.HiltViewModel

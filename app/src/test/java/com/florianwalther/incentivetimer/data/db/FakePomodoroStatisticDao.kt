@@ -14,7 +14,7 @@ class FakePomodoroStatisticDao(
     override fun getAllPomodoroStatistics(): Flow<List<PomodoroStatistic>> =
         pomodoroStatistics.map { it.values.toList() }
 
-    override fun insertPomodoroStatistic(pomodoroStatistic: PomodoroStatistic) {
+    override suspend fun insertPomodoroStatistic(pomodoroStatistic: PomodoroStatistic) {
         val pomodoroStatisticWithId = if (pomodoroStatistic.id > 0) {
             pomodoroStatistic
         } else {

@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import logcat.logcat
 import java.util.*
 import javax.inject.Inject
 
@@ -42,7 +41,7 @@ class StatisticsViewModel @Inject constructor(
         StatisticsGranularity.values().indexOf(granularity)
     }
 
-    private val allDailyPomodoroStatistics =
+    private val allDailyPomodoroStatistics: Flow<List<DailyPomodoroStatistic>> =
         pomodoroStatisticDao.getAllPomodoroStatistics().map { pomodoroStatistics ->
             pomodoroStatistics
                 .groupBy { pomodoroStatistic ->
@@ -50,6 +49,7 @@ class StatisticsViewModel @Inject constructor(
                 }
                 .toMutableMap()
                 .apply {
+                    // generate statistics for zero minute days
                     if (isNotEmpty()) {
                         val firstDate = keys.first()
                         val lastDate = keys.last()
@@ -57,11 +57,6 @@ class StatisticsViewModel @Inject constructor(
 
                         while (currentDate.time < lastDate.time && currentDate.dayAfter().time < lastDate.time) {
                             if (!keys.contains(currentDate.dayAfter())) {
-                                logcat("StatisticsViewModel") {
-                                    "EMPTY: timestamp: ${currentDate.dayAfter().time}, date: ${currentDate.dayAfter()},  without time: ${
-                                        currentDate.dayAfter().withOutTime().time
-                                    }"
-                                }
                                 this[currentDate.dayAfter()] = emptyList()
                             }
                             currentDate = currentDate.dayAfter()

@@ -1,10 +1,16 @@
 package com.florianwalther.incentivetimer.features.settings
 
+import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -22,6 +28,8 @@ import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
 import com.florianwalther.incentivetimer.features.settings.model.SettingsScreenState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import com.florianwalther.incentivetimer.BuildConfig
 
 @Composable
 fun SettingsScreenAppBar() {
@@ -42,31 +50,50 @@ fun SettingsScreenContent(
     val longBreakLength = screenState.timerPreferences.longBreakLengthInMinutes
     val pomodorosPerSet = screenState.timerPreferences.pomodorosPerSet
 
-    Column {
+    val scrollState = rememberScrollState()
+
+    Column(Modifier.verticalScroll(scrollState)) {
         SectionTitle(R.string.timer)
         BasicPreference(
             title = stringResource(R.string.pomodoro_length),
             summary = stringResource(R.string.minutes_placeholder, pomodoroLength),
             onClick = actions::onPomodoroLengthPreferenceClicked,
         )
-        Divider()
         BasicPreference(
             title = stringResource(R.string.short_break_length),
             summary = stringResource(R.string.minutes_placeholder, shortBreakLength),
             onClick = actions::onShortBreakLengthPreferenceClicked,
 
             )
-        Divider()
         BasicPreference(
             title = stringResource(R.string.long_break_length),
             summary = stringResource(R.string.minutes_placeholder, longBreakLength),
             onClick = actions::onLongBreakLengthPreferenceClicked,
         )
-        Divider()
         BasicPreference(
             title = stringResource(R.string.number_of_pomodoros_before_long_break),
             summary = pomodorosPerSet.toString(),
             onClick = actions::onPomodorosPerSetPreferenceClicked,
+        )
+        SectionTitle(R.string.support)
+        val context = LocalContext.current
+        BasicPreference(
+            title = stringResource(R.string.bug_report_feature_request_text),
+            summary = null,
+            onClick = {
+                val intent = Intent(Intent.ACTION_SENDTO).apply {
+                    data = Uri.parse("mailto:")
+                    putExtra(Intent.EXTRA_EMAIL, "info@codinginflow.com")
+                    putExtra(Intent.EXTRA_SUBJECT, "IncentiveTimer feature request/bug report")
+                }
+                context.startActivity(intent)
+            }
+        )
+        SectionTitle(R.string.info)
+        BasicPreference(
+            title = stringResource(R.string.app_version),
+            summary = BuildConfig.VERSION_NAME,
+            icon = Icons.Default.Info,
         )
     }
 
@@ -135,14 +162,14 @@ private fun SectionTitle(
 @Composable
 private fun BasicPreference(
     title: String,
-    summary: String,
-    onClick: () -> Unit,
+    summary: String?,
+    onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
 ) {
     Row(
         modifier
-            .clickable(onClick = onClick)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(16.dp)
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -152,12 +179,14 @@ private fun BasicPreference(
             Spacer(modifier = Modifier.width(16.dp))
         }
         Column {
-            Text(text = title, fontWeight = FontWeight.Bold)
-            Text(
-                text = summary,
-                color = Color.Gray,
-                style = MaterialTheme.typography.body2
-            )
+            Text(text = title)
+            if (summary != null) {
+                Text(
+                    text = summary,
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.body2
+                )
+            }
         }
     }
 }

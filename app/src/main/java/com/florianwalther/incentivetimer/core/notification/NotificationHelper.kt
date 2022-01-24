@@ -1,8 +1,8 @@
 package com.florianwalther.incentivetimer.core.notification
 
 import androidx.core.app.NotificationCompat
+import com.florianwalther.incentivetimer.data.datastore.PomodoroPhase
 import com.florianwalther.incentivetimer.data.db.Reward
-import com.florianwalther.incentivetimer.features.timer.PomodoroPhase
 
 interface NotificationHelper {
     fun getBaseTimerServiceNotification(): NotificationCompat.Builder

@@ -1,8 +1,8 @@
 package com.florianwalther.incentivetimer.core.notification
 
 import androidx.core.app.NotificationCompat
+import com.florianwalther.incentivetimer.data.datastore.PomodoroPhase
 import com.florianwalther.incentivetimer.data.db.Reward
-import com.florianwalther.incentivetimer.features.timer.PomodoroPhase
 
 sealed class TimerCompletedNotificationState {
     data class Shown(val pomodoroPhase: PomodoroPhase) : TimerCompletedNotificationState()

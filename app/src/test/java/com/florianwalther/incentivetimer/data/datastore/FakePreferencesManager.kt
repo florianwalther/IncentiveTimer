@@ -1,4 +1,4 @@
-package com.florianwalther.incentivetimer.data.preferences
+package com.florianwalther.incentivetimer.data.datastore
 
 import com.zhuinden.flowcombinetuplekt.combineTuple
 import kotlinx.coroutines.flow.Flow

@@ -71,7 +71,7 @@
     <string name="statistics">Statistics</string>
     <string name="pomodoro_minutes_completed">Pomodoro minutes completed</string>
     <string name="no_data_text_daily_pomodoro_statistics">No data yet. Your pomodoro statistics will show up here.</string>
-    <string name="min">min</string>
+    <string name="minutes_abbreviation">min</string>
     <string name="drop_down_menu_button_empty_options">No options available</string>
     <string name="last_7_days">Last 7 days</string>
     <string name="all_time">All time</string>
@@ -79,4 +79,11 @@
     <string name="last_30_days">Last 30 days</string>
     <string name="reset_statistics">Reset statistics</string>
     <string name="reset_pomodoro_statistics_confirmation_message">Do you really want to delete all previous Pomodoro statistics?</string>
+    <string name="reward_list_empty_text">No rewards found. Click the + button to add a new reward.</string>
+    <string name="hours_abbreviation">h</string>
+    <string name="pomodoro_time_completed">Pomodoro time completed</string>
+    <string name="support">Support</string>
+    <string name="bug_report_feature_request_text">Report bug/Request feature</string>
+    <string name="info">Info</string>
+    <string name="app_version">App version</string>
 </resources>

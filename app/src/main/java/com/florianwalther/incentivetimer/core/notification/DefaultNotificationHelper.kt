@@ -11,8 +11,8 @@ import androidx.core.net.toUri
 import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.application.ITActivity
 import com.florianwalther.incentivetimer.core.util.formatMillisecondsToTimeString
+import com.florianwalther.incentivetimer.data.datastore.PomodoroPhase
 import com.florianwalther.incentivetimer.data.db.Reward
-import com.florianwalther.incentivetimer.features.timer.PomodoroPhase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton

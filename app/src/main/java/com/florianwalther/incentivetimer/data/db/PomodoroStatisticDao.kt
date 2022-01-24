@@ -13,7 +13,7 @@ interface PomodoroStatisticDao {
     fun getAllPomodoroStatistics(): Flow<List<PomodoroStatistic>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertPomodoroStatistic(pomodoroStatistic: PomodoroStatistic)
+    suspend fun insertPomodoroStatistic(pomodoroStatistic: PomodoroStatistic)
 
     @Query("DELETE FROM pomodoro_statistics")
     suspend fun deleteAllPomodoroStatistics()

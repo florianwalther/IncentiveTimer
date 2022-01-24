@@ -13,3 +13,5 @@ class ITApplication : Application() {
         AndroidLogcatLogger.installOnDebuggableApp(this, minPriority = LogPriority.VERBOSE)
     }
 }
+
+// TODO: 23/01/2022 Remove orientation lock & implement layout variations

@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -42,7 +43,7 @@ fun RewardListScreenAppBar(
             if (screenState.multiSelectionModeActive) {
                 Text(stringResource(R.string.selected_placeholder, screenState.selectedItemCount))
             } else {
-                Text(stringResource(R.string.reward_list))
+                Text(stringResource(R.string.rewards))
             }
         },
         actions = {
@@ -114,47 +115,59 @@ fun RewardListScreenContent(
         val listState = rememberLazyListState()
         val coroutineScope = rememberCoroutineScope()
 
-        Box {
-            LazyColumn(
-                contentPadding = PaddingValues(
-                    top = 8.dp,
-                    start = 8.dp,
-                    end = 8.dp,
-                    bottom = ListBottomPadding
-                ),
-                state = listState,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(screenState.rewards, key = { it.id }) { reward ->
-                    val selected = screenState.selectedRewardIds.contains(reward.id)
-                    val dismissState = rememberDismissState(
-                        confirmStateChange = { dismissValue ->
-                            if (dismissValue == DismissValue.DismissedToEnd || dismissValue == DismissValue.DismissedToStart) {
-                                actions.onRewardSwiped(reward)
+        Box(Modifier.fillMaxSize()) {
+            val rewards = screenState.rewards
+            if (rewards.isEmpty()) {
+                Text(
+                    stringResource(R.string.reward_list_empty_text),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(16.dp),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.body2,
+                )
+            } else {
+                LazyColumn(
+                    contentPadding = PaddingValues(
+                        top = 8.dp,
+                        start = 8.dp,
+                        end = 8.dp,
+                        bottom = ListBottomPadding
+                    ),
+                    state = listState,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(screenState.rewards, key = { it.id }) { reward ->
+                        val selected = screenState.selectedRewardIds.contains(reward.id)
+                        val dismissState = rememberDismissState(
+                            confirmStateChange = { dismissValue ->
+                                if (dismissValue == DismissValue.DismissedToEnd || dismissValue == DismissValue.DismissedToStart) {
+                                    actions.onRewardSwiped(reward)
+                                }
+                                true
+                            })
+                        if (reward.isUnlocked) {
+                            SwipeToDismiss(
+                                state = dismissState,
+                                background = {},
+                                modifier = Modifier.animateItemPlacement(),
+                            ) {
+                                RewardItem(
+                                    reward = reward,
+                                    selected = selected,
+                                    onItemClicked = actions::onRewardClicked,
+                                    onItemLongClicked = actions::onRewardLongClicked,
+                                )
                             }
-                            true
-                        })
-                    if (reward.isUnlocked) {
-                        SwipeToDismiss(
-                            state = dismissState,
-                            background = {},
-                            modifier = Modifier.animateItemPlacement(),
-                        ) {
+                        } else {
                             RewardItem(
                                 reward = reward,
                                 selected = selected,
                                 onItemClicked = actions::onRewardClicked,
                                 onItemLongClicked = actions::onRewardLongClicked,
+                                modifier = Modifier.animateItemPlacement(),
                             )
                         }
-                    } else {
-                        RewardItem(
-                            reward = reward,
-                            selected = selected,
-                            onItemClicked = actions::onRewardClicked,
-                            onItemLongClicked = actions::onRewardLongClicked,
-                            modifier = Modifier.animateItemPlacement(),
-                        )
                     }
                 }
             }

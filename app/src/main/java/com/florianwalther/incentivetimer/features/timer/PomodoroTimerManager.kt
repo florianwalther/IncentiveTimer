@@ -1,42 +1,28 @@
 package com.florianwalther.incentivetimer.features.timer
 
-import androidx.annotation.StringRes
-import com.florianwalther.incentivetimer.R
 import com.florianwalther.incentivetimer.core.notification.NotificationHelper
 import com.florianwalther.incentivetimer.core.util.millisecondsToMinutes
 import com.florianwalther.incentivetimer.core.util.minutesToMilliseconds
+import com.florianwalther.incentivetimer.data.datastore.PomodoroPhase
+import com.florianwalther.incentivetimer.data.datastore.PomodoroTimerStateManager
+import com.florianwalther.incentivetimer.data.datastore.PreferencesManager
 import com.florianwalther.incentivetimer.data.db.PomodoroStatistic
 import com.florianwalther.incentivetimer.data.db.PomodoroStatisticDao
-import com.florianwalther.incentivetimer.data.preferences.PreferencesManager
 import com.florianwalther.incentivetimer.di.ApplicationScope
 import com.florianwalther.incentivetimer.features.rewards.RewardUnlockManager
-import com.zhuinden.flowcombinetuplekt.combineTuple
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
-data class PomodoroTimerState(
-    val timerRunning: Boolean,
-    val currentPhase: PomodoroPhase,
-    val timeLeftInMillis: Long,
-    val timeTargetInMillis: Long,
-    val pomodorosCompletedInSet: Int,
-    val pomodorosPerSetTarget: Int,
-    val pomodorosCompletedTotal: Int,
-)
-
-enum class PomodoroPhase(@StringRes val readableName: Int) {
-    POMODORO(R.string.pomodoro), SHORT_BREAK(R.string.short_break), LONG_BREAK(R.string.long_break);
-
-    val isBreak get() = this == SHORT_BREAK || this == LONG_BREAK
-}
 
 @Singleton
 class PomodoroTimerManager @Inject constructor(
     private val timer: CountDownTimer,
     private val preferencesManager: PreferencesManager,
+    private val pomodoroTimerStateManager: PomodoroTimerStateManager,
     private val timerServiceManager: TimerServiceManager,
     private val notificationHelper: NotificationHelper,
     private val rewardUnlockManager: RewardUnlockManager,
@@ -44,142 +30,119 @@ class PomodoroTimerManager @Inject constructor(
     @ApplicationScope private val applicationScope: CoroutineScope,
 ) {
     private val timerPreferences = preferencesManager.timerPreferences
-
-    private val timerRunning = MutableStateFlow(false)
-    private val currentPhase = MutableStateFlow(PomodoroPhase.POMODORO)
-    private val timeLeftInMillis = MutableStateFlow(0L)
-    private val timeTargetInMillis = MutableStateFlow(0L)
-    private val pomodorosPerSetTarget = timerPreferences.map { it.pomodorosPerSet }
-    private val pomodorosCompletedInSet = MutableStateFlow(0)
-    private val pomodorosCompletedTotal = MutableStateFlow(0)
-
-    val pomodoroTimerState = combineTuple(
-        timerRunning,
-        currentPhase,
-        timeLeftInMillis,
-        timeTargetInMillis,
-        pomodorosCompletedInSet,
-        pomodorosPerSetTarget,
-        pomodorosCompletedTotal,
-    ).map { (
-                timerRunning,
-                currentPhase,
-                timeLeftInMillis,
-                timeTargetInMillis,
-                pomodorosCompletedInSet,
-                pomodorosPerSetTarget,
-                pomodorosCompletedTotal
-            ) ->
-        PomodoroTimerState(
-            timerRunning = timerRunning,
-            currentPhase = currentPhase,
-            timeLeftInMillis = timeLeftInMillis,
-            timeTargetInMillis = timeTargetInMillis,
-            pomodorosCompletedInSet = pomodorosCompletedInSet,
-            pomodorosPerSetTarget = pomodorosPerSetTarget,
-            pomodorosCompletedTotal = pomodorosCompletedTotal,
-        )
-    }
+    val pomodoroTimerState = pomodoroTimerStateManager.timerState
 
     init {
         applicationScope.launch {
+            pomodoroTimerStateManager.updateTimerRunning(false)
             // TODO: 10/01/2022 Quick fix to make coroutines tests work
             //  -> replace for collect later
 //            val timerPreferences = this@PomodoroTimerManager.timerPreferences.first()
             timerPreferences.collectLatest { timerPreferences ->
-                val currentPhase = currentPhase.value
-                val currentTimeTargetInMillis = timeTargetInMillis.value
-                val currentTimeLeftInMillis = timeLeftInMillis.value
-                val newTimeTargetInMillis =
-                    timerPreferences.lengthInMinutesForPhase(currentPhase).minutesToMilliseconds()
-                if (timerPreferences.pomodorosPerSet <= pomodorosCompletedInSet.value
-                    && currentPhase == PomodoroPhase.POMODORO
-                ) {
-                    pomodorosCompletedInSet.value = 0
+            pomodoroTimerStateManager.updatePomodorosPerSetTarget(timerPreferences.pomodorosPerSet)
+            val pomodoroTimerState = pomodoroTimerState.first()
+            val currentPhase = pomodoroTimerState.currentPhase
+            val currentTimeTargetInMillis = pomodoroTimerState.timeTargetInMillis
+            val currentTimeLeftInMillis = pomodoroTimerState.timeLeftInMillis
+            val newTimeTargetInMillis =
+                timerPreferences.lengthInMinutesForPhase(currentPhase).minutesToMilliseconds()
+            if (timerPreferences.pomodorosPerSet <= pomodoroTimerState.pomodorosCompletedInSet
+                && currentPhase == PomodoroPhase.POMODORO
+            ) {
+                pomodoroTimerStateManager.updatePomodorosCompletedInSet(0)
+            }
+            val timerWasRunning = pomodoroTimerState.timerRunning
+            // TODO: 21/01/2022 Write tests for below
+            if (newTimeTargetInMillis > currentTimeTargetInMillis) {
+                timer.cancelTimer()
+                pomodoroTimerStateManager.updateTimeLeftInMillis(
+                    currentTimeLeftInMillis + newTimeTargetInMillis - currentTimeTargetInMillis
+                )
+                if (timerWasRunning) {
+                    startTimer()
                 }
-                val timerWasRunning = timerRunning.value
-                if (newTimeTargetInMillis > currentTimeTargetInMillis) {
-                    timer.cancelTimer()
-                    timeLeftInMillis.value += newTimeTargetInMillis - currentTimeTargetInMillis
-                    if (timerWasRunning) {
-                        startTimer()
-                    }
+            }
+            if (newTimeTargetInMillis < currentTimeTargetInMillis) {
+                timer.cancelTimer()
+                pomodoroTimerStateManager.updateTimeLeftInMillis(
+                    currentTimeLeftInMillis - (currentTimeTargetInMillis - newTimeTargetInMillis)
+                )
+                if (timerWasRunning) {
+                    startTimer()
+                } else {
+                    onTimerFinished()
                 }
-                if (newTimeTargetInMillis < currentTimeTargetInMillis) {
-                    timer.cancelTimer()
-                    timeLeftInMillis.value -= currentTimeTargetInMillis - newTimeTargetInMillis
-                    if (timerWasRunning) {
-                        startTimer()
-                    } else {
-                        onTimerFinished()
-                    }
-                }
-                timeTargetInMillis.value = newTimeTargetInMillis
+            }
+            pomodoroTimerStateManager.updateTimeTargetInMillis(newTimeTargetInMillis)
             }
         }
     }
 
     fun startStopTimer() {
         notificationHelper.removeTimerCompletedNotification()
-        val timerRunning = timerRunning.value
-        if (timerRunning) {
-            stopTimer()
-        } else {
-            notificationHelper.removeResumeTimerNotification()
-            startTimer()
+        applicationScope.launch {
+            val timerRunning = pomodoroTimerState.first().timerRunning
+            if (timerRunning) {
+                stopTimer()
+            } else {
+                notificationHelper.removeResumeTimerNotification()
+                startTimer()
+            }
         }
     }
 
-    private fun startTimer() {
+    private suspend fun startTimer() {
         timer.startTimer(
-            durationMillis = timeLeftInMillis.value,
+            durationMillis = pomodoroTimerState.first().timeLeftInMillis,
             countDownInterval = 1000L,
             onTick = { millisUntilFinished ->
-                timeLeftInMillis.value = millisUntilFinished
+                pomodoroTimerStateManager.updateTimeLeftInMillis(millisUntilFinished)
             },
             onFinish = {
                 onTimerFinished()
             },
         )
         timerServiceManager.startTimerService()
-        timerRunning.value = true
+        pomodoroTimerStateManager.updateTimerRunning(true)
     }
 
-    private fun onTimerFinished() {
-        val currentPhase = currentPhase.value
-        println("onFinish phase: $currentPhase")
-        notificationHelper.showTimerCompletedNotification(currentPhase)
-        if (currentPhase == PomodoroPhase.POMODORO) {
-            pomodoroStatisticDao.insertPomodoroStatistic(
-                PomodoroStatistic(
-                    pomodoroDurationInMinutes = timeTargetInMillis.value.millisecondsToMinutes(),
-                    timestampInMilliseconds = System.currentTimeMillis(),
-                )
-            )
-            rewardUnlockManager.rollAllRewards()
-            pomodorosCompletedTotal.value++
-            pomodorosCompletedInSet.value++
-        }
+    private suspend fun onTimerFinished() {
+        val pomodoroTimerState = pomodoroTimerState.first()
         applicationScope.launch {
-            startNextPhase()
-            if (timerRunning.value) {
-                startTimer()
+            val currentPhase = pomodoroTimerState.currentPhase
+            println("onFinish phase: $currentPhase")
+            notificationHelper.showTimerCompletedNotification(currentPhase)
+
+            if (currentPhase == PomodoroPhase.POMODORO) {
+                pomodoroStatisticDao.insertPomodoroStatistic(
+                    PomodoroStatistic(
+                        pomodoroDurationInMinutes = pomodoroTimerState.timeTargetInMillis.millisecondsToMinutes(),
+                        timestampInMilliseconds = System.currentTimeMillis(),
+                    )
+                )
+                rewardUnlockManager.rollAllRewards()
+                pomodoroTimerStateManager.updatePomodorosCompletedInSet(pomodoroTimerState.pomodorosCompletedInSet + 1)
+                pomodoroTimerStateManager.updatePomodorosCompletedTotal(pomodoroTimerState.pomodorosCompletedTotal + 1)
             }
         }
+        startNextPhase()
+        if (pomodoroTimerState.timerRunning) {
+            startTimer()
+        }
     }
 
-    private fun stopTimer() {
+    private suspend fun stopTimer() {
         timer.cancelTimer()
         timerServiceManager.stopTimerService()
-        timerRunning.value = false
+        pomodoroTimerStateManager.updateTimerRunning(false)
     }
 
     fun skipBreak() {
-        if (currentPhase.value.isBreak) {
-            timer.cancelTimer()
-            applicationScope.launch {
+        applicationScope.launch {
+            if (pomodoroTimerState.first().currentPhase.isBreak) {
+                timer.cancelTimer()
                 startNextPhase()
-                if (timerRunning.value) {
+                if (pomodoroTimerState.first().timerRunning) {
                     startTimer()
                 }
             }
@@ -187,17 +150,18 @@ class PomodoroTimerManager @Inject constructor(
     }
 
     private suspend fun resetPomodoroCounterIfTargetReached() {
-        val pomodorosCompleted = pomodorosCompletedInSet.value
-        val pomodorosTarget = pomodorosPerSetTarget.first()
+        val pomodorosCompleted = pomodoroTimerState.first().pomodorosCompletedInSet
+        val pomodorosTarget = pomodoroTimerState.first().pomodorosPerSetTarget
         if (pomodorosCompleted >= pomodorosTarget) {
-            pomodorosCompletedInSet.value = 0
+            pomodoroTimerStateManager.updatePomodorosCompletedInSet(0)
         }
     }
 
     private suspend fun startNextPhase() {
-        val lastPhase = currentPhase.value
-        val pomodorosCompletedInSet = pomodorosCompletedInSet.value
-        val pomodorosPerSetTarget = pomodorosPerSetTarget.first()
+        val pomodoroTimerState = pomodoroTimerState.first()
+        val lastPhase = pomodoroTimerState.currentPhase
+        val pomodorosCompletedInSet = pomodoroTimerState.pomodorosCompletedInSet
+        val pomodorosPerSetTarget = pomodoroTimerState.pomodorosPerSetTarget
 
         val nextPhase = getNextPhase(lastPhase, pomodorosCompletedInSet, pomodorosPerSetTarget)
 
@@ -209,10 +173,12 @@ class PomodoroTimerManager @Inject constructor(
     }
 
     private suspend fun setPomodoroPhaseAndResetTimer(newPhase: PomodoroPhase) {
-        currentPhase.value = newPhase
         val newTimeTarget = getTimeTargetInMillisecondsForPhase(newPhase)
-        timeTargetInMillis.value = newTimeTarget
-        timeLeftInMillis.value = newTimeTarget
+        pomodoroTimerStateManager.apply {
+            updateCurrentPhase(newPhase)
+            updateTimeTargetInMillis(newTimeTarget)
+            updateTimeLeftInMillis(newTimeTarget)
+        }
     }
 
     private fun getNextPhase(
@@ -235,18 +201,18 @@ class PomodoroTimerManager @Inject constructor(
 
     suspend fun stopAndResetTimer() {
         stopTimer()
-        setPomodoroPhaseAndResetTimer(currentPhase.value)
+        setPomodoroPhaseAndResetTimer(pomodoroTimerState.first().currentPhase)
     }
 
     suspend fun resetPomodoroSet() {
         stopTimer()
-        pomodorosCompletedInSet.value = 0
+        pomodoroTimerStateManager.updatePomodorosCompletedInSet(0)
         setPomodoroPhaseAndResetTimer(PomodoroPhase.POMODORO)
     }
 
     fun resetPomodoroCount() {
-        pomodorosCompletedTotal.value = 0
+        applicationScope.launch {
+            pomodoroTimerStateManager.updatePomodorosCompletedTotal(0)
+        }
     }
-
-    // TODO: 26/12/2021 Save instance state in Activity.onSaveInstanceState
 }
