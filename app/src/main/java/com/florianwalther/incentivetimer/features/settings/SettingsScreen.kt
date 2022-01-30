@@ -11,25 +11,29 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Watch
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.florianwalther.incentivetimer.BuildConfig
 import com.florianwalther.incentivetimer.R
+import com.florianwalther.incentivetimer.core.ui.composables.AppInstructionsDialog
+import com.florianwalther.incentivetimer.core.ui.composables.LabeledRadioButton
 import com.florianwalther.incentivetimer.core.ui.composables.NumberPicker
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
+import com.florianwalther.incentivetimer.data.datastore.ThemeSelection
 import com.florianwalther.incentivetimer.features.settings.model.SettingsScreenState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
-import com.florianwalther.incentivetimer.BuildConfig
 
 @Composable
 fun SettingsScreenAppBar() {
@@ -49,10 +53,19 @@ fun SettingsScreenContent(
     val shortBreakLength = screenState.timerPreferences.shortBreakLengthInMinutes
     val longBreakLength = screenState.timerPreferences.longBreakLengthInMinutes
     val pomodorosPerSet = screenState.timerPreferences.pomodorosPerSet
+    val autoStartNextTimer = screenState.timerPreferences.autoStartNextTimer
+
+    val selectedTheme = screenState.appPreferences.selectedTheme
 
     val scrollState = rememberScrollState()
 
     Column(Modifier.verticalScroll(scrollState)) {
+        SectionTitle(R.string.general)
+        BasicPreference(
+            title = stringResource(R.string.theme),
+            summary = stringResource(selectedTheme.readableName),
+            onClick = actions::onThemePreferenceClicked
+        )
         SectionTitle(R.string.timer)
         BasicPreference(
             title = stringResource(R.string.pomodoro_length),
@@ -75,15 +88,33 @@ fun SettingsScreenContent(
             summary = pomodorosPerSet.toString(),
             onClick = actions::onPomodorosPerSetPreferenceClicked,
         )
-        SectionTitle(R.string.support)
+        SwitchPreference(
+            title = stringResource(R.string.auto_start_timer),
+            summary = stringResource(R.string.timer_behaviour_description),
+            checked = autoStartNextTimer,
+            onCheckedChanged = actions::onAutoStartNextTimerCheckedChanged
+        )
+        SectionTitle(R.string.links)
         val context = LocalContext.current
         BasicPreference(
-            title = stringResource(R.string.bug_report_feature_request_text),
-            summary = null,
+            title = stringResource(R.string.show_app_instructions),
+            onClick = actions::onShowAppInstructionsClicked
+        )
+        BasicPreference(
+            title = stringResource(R.string.show_privacy_policy),
+            onClick = {
+                val website =
+                    Uri.parse("https://codinginflow.com/privacy-policy-incentivetimer-app")
+                val intent = Intent(Intent.ACTION_VIEW, website)
+                context.startActivity(intent)
+            }
+        )
+        BasicPreference(
+            title = stringResource(R.string.contact_support),
+            summary = stringResource(R.string.bug_report_feature_request_text),
             onClick = {
                 val intent = Intent(Intent.ACTION_SENDTO).apply {
-                    data = Uri.parse("mailto:")
-                    putExtra(Intent.EXTRA_EMAIL, "info@codinginflow.com")
+                    data = Uri.parse("mailto:info@codinginflow.com")
                     putExtra(Intent.EXTRA_SUBJECT, "IncentiveTimer feature request/bug report")
                 }
                 context.startActivity(intent)
@@ -97,9 +128,22 @@ fun SettingsScreenContent(
         )
     }
 
+    if (screenState.showThemeDialog) {
+        SingleChoiceDialog(
+            title = stringResource(R.string.theme),
+            optionNames = ThemeSelection.values().toList().map { stringResource(it.readableName) },
+            initialSelectedOptionIndex = ThemeSelection.values()
+                .indexOf(screenState.appPreferences.selectedTheme),
+            onConfirmed = { index ->
+                actions.onThemeSelected(ThemeSelection.values()[index])
+            },
+            onDismissRequest = actions::onThemeDialogDismissed
+        )
+    }
+
     if (screenState.showPomodoroLengthDialog) {
         NumberPickerDialog(
-            title = R.string.pomodoro_length,
+            title = stringResource(R.string.pomodoro_length),
             minValue = 1,
             maxValue = 180,
             initialValue = pomodoroLength,
@@ -111,7 +155,7 @@ fun SettingsScreenContent(
 
     if (screenState.showShortBreakLengthDialog) {
         NumberPickerDialog(
-            title = R.string.short_break_length,
+            title = stringResource(R.string.short_break_length),
             minValue = 1,
             maxValue = 180,
             initialValue = shortBreakLength,
@@ -123,7 +167,7 @@ fun SettingsScreenContent(
 
     if (screenState.showLongBreakLengthDialog) {
         NumberPickerDialog(
-            title = R.string.long_break_length,
+            title = stringResource(R.string.long_break_length),
             minValue = 1,
             maxValue = 180,
             initialValue = longBreakLength,
@@ -135,12 +179,18 @@ fun SettingsScreenContent(
 
     if (screenState.showPomodorosPerSetDialog) {
         NumberPickerDialog(
-            title = R.string.number_of_pomodoros_before_long_break,
+            title = stringResource(R.string.number_of_pomodoros_before_long_break),
             minValue = 1,
             maxValue = 16,
             initialValue = pomodorosPerSet,
             onConfirmed = actions::onPomodorosPerSetSet,
             onDismissRequest = actions::onPomodorosPerSetDialogDismissed
+        )
+    }
+
+    if (screenState.showAppInstructionsDialog) {
+        AppInstructionsDialog(
+            onDismissRequest = actions::onAppInstructionsDialogDismissed
         )
     }
 }
@@ -162,9 +212,9 @@ private fun SectionTitle(
 @Composable
 private fun BasicPreference(
     title: String,
-    summary: String?,
-    onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
+    summary: String? = null,
+    onClick: (() -> Unit)? = null,
     icon: ImageVector? = null,
 ) {
     Row(
@@ -192,13 +242,50 @@ private fun BasicPreference(
 }
 
 @Composable
+private fun SwitchPreference(
+    title: String,
+    modifier: Modifier = Modifier,
+    summary: String? = null,
+    checked: Boolean,
+    onCheckedChanged: (checked: Boolean) -> Unit,
+    icon: ImageVector? = null,
+) {
+    Row(
+        modifier
+            .clickable(onClick = { onCheckedChanged(!checked) })
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (icon != null) {
+            Icon(icon, contentDescription = null)
+            Spacer(modifier = Modifier.width(16.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Text(text = title)
+            if (summary != null) {
+                Text(
+                    text = summary,
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.body2
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChanged,
+        )
+    }
+}
+
+@Composable
 private fun NumberPickerDialog(
-    @StringRes title: Int,
+    title: String,
     minValue: Int,
     maxValue: Int,
     initialValue: Int,
     modifier: Modifier = Modifier,
-    onConfirmed: (value: Int) -> Unit,
+    onConfirmed: (selectedValue: Int) -> Unit,
     onDismissRequest: () -> Unit,
     @StringRes label: Int? = null,
 ) {
@@ -212,7 +299,7 @@ private fun NumberPickerDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(stringResource(title), modifier = Modifier.fillMaxWidth())
+                Text(title)
                 Spacer(Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     NumberPicker(
@@ -243,14 +330,70 @@ private fun NumberPickerDialog(
     )
 }
 
+@Composable
+private fun SingleChoiceDialog(
+    title: String,
+    optionNames: List<String>,
+    initialSelectedOptionIndex: Int,
+    modifier: Modifier = Modifier,
+    onConfirmed: (index: Int) -> Unit,
+    onDismissRequest: () -> Unit,
+) {
+    var selectedOptionIndex by rememberSaveable { mutableStateOf(initialSelectedOptionIndex) }
+
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = {
+            Text(title)
+        },
+        text = {
+            Column {
+                optionNames.forEach { optionName ->
+                    LabeledRadioButton(
+                        text = optionName,
+                        selected = selectedOptionIndex == optionNames.indexOf(optionName),
+                        onClick = { selectedOptionIndex = optionNames.indexOf(optionName) }
+                    )
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text(stringResource(R.string.cancel))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirmed(selectedOptionIndex) }) {
+                Text(stringResource(R.string.ok))
+            }
+        },
+        modifier = modifier,
+    )
+}
+
 @Preview(
     name = "Light mode",
-    uiMode = Configuration.UI_MODE_NIGHT_NO
+    uiMode = Configuration.UI_MODE_NIGHT_NO,
 )
 @Preview(
     name = "Dark mode",
     uiMode = Configuration.UI_MODE_NIGHT_YES,
 )
+@Composable
+private fun SwitchPreferencePreview() {
+    IncentiveTimerTheme {
+        Surface {
+            SwitchPreference(
+                title = "Switch preference",
+                summary = "This is the summary",
+                checked = true,
+                onCheckedChanged = {},
+                icon = Icons.Default.Watch,
+            )
+        }
+    }
+}
+/*
 @Composable
 private fun ScreenContentPreview() {
     IncentiveTimerTheme {
@@ -270,8 +413,15 @@ private fun ScreenContentPreview() {
                     override fun onPomodorosPerSetPreferenceClicked() {}
                     override fun onPomodorosPerSetSet(amount: Int) {}
                     override fun onPomodorosPerSetDialogDismissed() {}
+                    override fun onAutoStartNextTimerCheckedChanged(checked: Boolean) {}
+                    override fun onShowAppInstructionsClicked() {}
+                    override fun onAppInstructionsDialogDismissed() {}
+                    override fun onThemePreferenceClicked() {}
+                    override fun onThemeSelected(theme: ThemeSelection) {}
+                    override fun onThemeDialogDismissed() {}
                 }
             )
         }
     }
 }
+*/

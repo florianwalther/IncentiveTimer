@@ -1,5 +1,7 @@
 package com.florianwalther.incentivetimer.features.settings
 
+import com.florianwalther.incentivetimer.data.datastore.ThemeSelection
+
 interface SettingsScreenActions {
     fun onPomodoroLengthPreferenceClicked()
     fun onPomodoroLengthSet(lengthInMinutes: Int)
@@ -13,4 +15,10 @@ interface SettingsScreenActions {
     fun onPomodorosPerSetPreferenceClicked()
     fun onPomodorosPerSetSet(amount: Int)
     fun onPomodorosPerSetDialogDismissed()
+    fun onAutoStartNextTimerCheckedChanged(checked: Boolean)
+    fun onShowAppInstructionsClicked()
+    fun onAppInstructionsDialogDismissed()
+    fun onThemePreferenceClicked()
+    fun onThemeSelected(theme: ThemeSelection)
+    fun onThemeDialogDismissed()
 }

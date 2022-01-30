@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import logcat.logcat
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -126,8 +127,11 @@ class PomodoroTimerManager @Inject constructor(
             }
         }
         startNextPhase()
-        if (pomodoroTimerState.timerRunning) {
+        val autoStartNextTimer = timerPreferences.first().autoStartNextTimer
+        if (autoStartNextTimer) {
             startTimer()
+        } else {
+            stopTimer()
         }
     }
 

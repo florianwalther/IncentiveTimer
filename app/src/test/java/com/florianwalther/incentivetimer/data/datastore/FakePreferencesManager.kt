@@ -16,23 +16,30 @@ class FakePreferencesManager(
     private val shortBreakLengthInMinutes = MutableStateFlow(initialShortBreakLengthInMinutes)
     private val longBreakLengthInMinutes = MutableStateFlow(initialLongBreakLengthInMinutes)
     private val pomodorosPerSet = MutableStateFlow(initialPomodorosPerSet)
+    private val autoStartNextTimer = MutableStateFlow(true)
+
+    override val appPreferences: Flow<AppPreferences>
+        get() = TODO("Not yet implemented")
 
     override val timerPreferences: Flow<TimerPreferences> = combineTuple(
         pomodoroLengthInMinutes,
         shortBreakLengthInMinutes,
         longBreakLengthInMinutes,
         pomodorosPerSet,
+        autoStartNextTimer,
     ).map { (
                 pomodoroLengthInMinutes,
                 shortBreakLengthInMinutes,
                 longBreakLengthInMinutes,
-                pomodorosPerSet
+                pomodorosPerSet,
+                autoStartNextTimer,
             ) ->
         TimerPreferences(
             pomodoroLengthInMinutes = pomodoroLengthInMinutes,
             shortBreakLengthInMinutes = shortBreakLengthInMinutes,
             longBreakLengthInMinutes = longBreakLengthInMinutes,
             pomodorosPerSet = pomodorosPerSet,
+            autoStartNextTimer = autoStartNextTimer,
         )
     }
 
@@ -50,5 +57,17 @@ class FakePreferencesManager(
 
     override suspend fun updatePomodorosPerSet(amount: Int) {
         pomodorosPerSet.value = amount
+    }
+
+    override suspend fun updateAutoStartNextTimer(autoStartNextTimer: Boolean) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun updateSelectedTheme(theme: ThemeSelection) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun updateAppInstructionsDialogShown(shown: Boolean) {
+        TODO("Not yet implemented")
     }
 }

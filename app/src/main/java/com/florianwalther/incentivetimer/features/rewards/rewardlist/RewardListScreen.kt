@@ -1,6 +1,7 @@
 package com.florianwalther.incentivetimer.features.rewards.rewardlist
 
 import android.content.res.Configuration
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
