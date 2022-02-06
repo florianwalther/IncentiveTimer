@@ -94,7 +94,7 @@ dependencies {
     implementation "androidx.datastore:datastore-preferences:1.0.0"
 
     // Room
-    def room_version = "2.4.0"
+    def room_version = "2.4.1"
     implementation "androidx.room:room-runtime:$room_version"
     kapt "androidx.room:room-compiler:$room_version"
     implementation "androidx.room:room-ktx:$room_version"
@@ -102,10 +102,11 @@ dependencies {
     // Hilt
     implementation "com.google.dagger:hilt-android:2.38.1"
     kapt "com.google.dagger:hilt-compiler:2.38.1"
-    implementation 'androidx.hilt:hilt-navigation-compose:1.0.0-rc01'
+    implementation 'androidx.hilt:hilt-navigation-compose:1.0.0'
 
     // Accompanist libraries
     implementation "com.google.accompanist:accompanist-flowlayout:0.21.4-beta"
+    implementation "com.google.accompanist:accompanist-systemuicontroller:0.24.1-alpha"
 
     // Logcat
     implementation 'com.squareup.logcat:logcat:0.1'

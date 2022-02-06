@@ -12,10 +12,12 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDeepLink
 import androidx.navigation.navDeepLink
 import com.florianwalther.incentivetimer.R
+import com.florianwalther.incentivetimer.data.datastore.PomodoroTimerState
 import com.florianwalther.incentivetimer.features.timer.TimerScreenContent
 import com.florianwalther.incentivetimer.features.timer.TimerScreenAppBar
 import com.florianwalther.incentivetimer.features.timer.TimerViewModel
 import com.florianwalther.incentivetimer.features.timer.model.TimerScreenState
+import logcat.logcat
 
 object TimerScreenSpec : BottomNavScreenSpec {
     override val navHostRoute: String = "timer"
@@ -43,9 +45,9 @@ object TimerScreenSpec : BottomNavScreenSpec {
     @Composable
     override fun Content(navController: NavController, navBackStackEntry: NavBackStackEntry) {
         val viewModel: TimerViewModel = hiltViewModel(navBackStackEntry)
-        val pomodoroTimerState by viewModel.pomodoroTimerState.observeAsState()
+        val pomodoroTimerState by viewModel.pomodoroTimerState.observeAsState(PomodoroTimerState.initialState)
         val screenState by viewModel.screenState.observeAsState(TimerScreenState.initialState)
-
+logcat { "timerRunning = ${pomodoroTimerState.timerRunning}" }
         TimerScreenContent(
             pomodoroTimerState = pomodoroTimerState,
             screenState = screenState,

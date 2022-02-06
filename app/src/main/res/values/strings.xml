@@ -83,7 +83,20 @@
     <string name="hours_abbreviation">h</string>
     <string name="pomodoro_time_completed">Pomodoro time completed</string>
     <string name="support">Support</string>
-    <string name="bug_report_feature_request_text">Report bug/Request feature</string>
+    <string name="bug_report_feature_request_text">Report a bug or request a feature</string>
     <string name="info">Info</string>
     <string name="app_version">App version</string>
+    <string name="app_instructions_text">"Welcome to IncentiveTimer!\nThis app combines the Pomodoro Technique with the power of variable rewards. Create rewards, set a chance on them, and unlock them by finishing your work with the Pomodoro timer."</string>
+    <string name="instructions">Instructions</string>
+    <string name="contact_support">Contact support</string>
+    <string name="links">Links</string>
+    <string name="show_app_instructions">Show app instructions</string>
+    <string name="show_privacy_policy">Show privacy policy</string>
+    <string name="general">General</string>
+    <string name="theme">Theme</string>
+    <string name="light">Light</string>
+    <string name="dark">Dark</string>
+    <string name="auto_system_default">Auto (System Default)</string>
+    <string name="timer_behaviour_description">Automatically start next timer when the previous timer has finished</string>
+    <string name="auto_start_timer">Auto start timer</string>
 </resources>

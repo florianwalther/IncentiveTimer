@@ -3,6 +3,8 @@ package com.florianwalther.incentivetimer.data.datastore
 import kotlinx.coroutines.flow.Flow
 
 interface PreferencesManager {
+    val appPreferences: Flow<AppPreferences>
+
     val timerPreferences: Flow<TimerPreferences>
 
     suspend fun updatePomodoroLength(lengthInMinutes: Int)
@@ -12,4 +14,10 @@ interface PreferencesManager {
     suspend fun updateLongBreakLength(lengthInMinutes: Int)
 
     suspend fun updatePomodorosPerSet(amount: Int)
+
+    suspend fun updateAutoStartNextTimer(autoStartNextTimer: Boolean)
+
+    suspend fun updateSelectedTheme(theme: ThemeSelection)
+
+    suspend fun updateAppInstructionsDialogShown(shown: Boolean)
 }

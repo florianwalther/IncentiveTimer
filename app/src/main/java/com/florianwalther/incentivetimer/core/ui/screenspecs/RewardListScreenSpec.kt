@@ -1,5 +1,6 @@
 package com.florianwalther.incentivetimer.core.ui.screenspecs
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.material.SnackbarResult
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Star
@@ -59,6 +60,10 @@ object RewardListScreenSpec : BottomNavScreenSpec {
         val scaffoldState = rememberScaffoldState()
 
         val context = LocalContext.current
+
+        BackHandler(enabled = screenState.multiSelectionModeActive) {
+            viewModel.onCancelMultiSelectionModeClicked()
+        }
 
         LaunchedEffect(Unit) {
             viewModel.events.collectLatest { event ->

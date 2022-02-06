@@ -10,17 +10,12 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import logcat.asLog
 import logcat.logcat
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
-
-enum class PomodoroPhase(@StringRes val readableName: Int) {
-    POMODORO(R.string.pomodoro), SHORT_BREAK(R.string.short_break), LONG_BREAK(R.string.long_break);
-
-    val isBreak get() = this == SHORT_BREAK || this == LONG_BREAK
-}
 
 data class PomodoroTimerState(
     val timerRunning: Boolean,
@@ -62,6 +57,7 @@ class DefaultPomodoroTimerStateManager @Inject constructor(
             }
             .map { preferences ->
                 val timerRunning = preferences[PreferencesKeys.TIMER_RUNNING] ?: false
+                logcat { "map with timerRunning = $timerRunning" }
                 val currentPhase = PomodoroPhase.valueOf(
                     preferences[PreferencesKeys.CURRENT_PHASE] ?: PomodoroPhase.POMODORO.name
                 )

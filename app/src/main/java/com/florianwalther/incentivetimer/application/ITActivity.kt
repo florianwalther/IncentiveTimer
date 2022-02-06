@@ -3,28 +3,26 @@ package com.florianwalther.incentivetimer.application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.StringRes
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.florianwalther.incentivetimer.R
+import com.florianwalther.incentivetimer.core.ui.composables.AppInstructionsDialog
 import com.florianwalther.incentivetimer.core.ui.screenspecs.*
 import com.florianwalther.incentivetimer.core.ui.theme.IncentiveTimerTheme
+import com.florianwalther.incentivetimer.data.datastore.ThemeSelection
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -33,15 +31,34 @@ class ITActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            IncentiveTimerTheme {
-                ScreenContent()
+            val activityViewModel: ITActivityViewModel = hiltViewModel()
+            val appPreferences by activityViewModel.appPreferences.observeAsState()
+
+            appPreferences?.let { appPreferences ->
+                val showAppInstructionsDialog = !appPreferences.appInstructionsDialogShown
+                val darkTheme = when (appPreferences.selectedTheme) {
+                    ThemeSelection.SYSTEM -> isSystemInDarkTheme()
+                    ThemeSelection.LIGHT -> false
+                    ThemeSelection.DARK -> true
+                }
+                IncentiveTimerTheme(
+                    darkTheme = darkTheme
+                ) {
+                    ScreenContent(
+                        showAppInstructionsDialog = showAppInstructionsDialog,
+                        onAppInstructionsDialogDismissed = activityViewModel::onAppInstructionsDialogDismissed
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ScreenContent() {
+private fun ScreenContent(
+    showAppInstructionsDialog: Boolean,
+    onAppInstructionsDialogDismissed: () -> Unit,
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -104,13 +121,20 @@ private fun ScreenContent() {
             }
         }
     }
+
+    if (showAppInstructionsDialog) {
+        AppInstructionsDialog(onDismissRequest = onAppInstructionsDialogDismissed)
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun ScreenContentPreview() {
     IncentiveTimerTheme {
-        ScreenContent()
+        ScreenContent(
+            showAppInstructionsDialog = false,
+            onAppInstructionsDialogDismissed = {}
+        )
     }
 }
 

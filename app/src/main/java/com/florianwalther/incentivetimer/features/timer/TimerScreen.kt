@@ -89,11 +89,11 @@ fun TimerScreenAppBar(
 
 @Composable
 fun TimerScreenContent(
-    pomodoroTimerState: PomodoroTimerState?,
+    pomodoroTimerState: PomodoroTimerState,
     screenState: TimerScreenState,
     actions: TimerScreenActions,
 ) {
-    val timerRunning = pomodoroTimerState?.timerRunning ?: false
+    val timerRunning = pomodoroTimerState.timerRunning
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,

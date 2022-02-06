@@ -5,7 +5,9 @@ import com.florianwalther.incentivetimer.features.timer.model.TimerScreenState
 import com.zhuinden.flowcombinetuplekt.combineTuple
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import logcat.logcat
 import javax.inject.Inject
 
 @HiltViewModel
@@ -14,7 +16,11 @@ class TimerViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
 ) : ViewModel(), TimerScreenActions {
 
-    val pomodoroTimerState = pomodoroTimerManager.pomodoroTimerState.asLiveData()
+    val pomodoroTimerState = pomodoroTimerManager.pomodoroTimerState
+        .onEach {
+            logcat { "timerRunning = ${it.timerRunning}" }
+        }
+        .asLiveData()
 
     private val showResetTimerConfirmationDialog =
         savedStateHandle.getLiveData<Boolean>("showResetTimerConfirmationDialog", false)
