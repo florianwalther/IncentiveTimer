@@ -40,41 +40,41 @@ class PomodoroTimerManager @Inject constructor(
             //  -> replace for collect later
 //            val timerPreferences = this@PomodoroTimerManager.timerPreferences.first()
             timerPreferences.collectLatest { timerPreferences ->
-            pomodoroTimerStateManager.updatePomodorosPerSetTarget(timerPreferences.pomodorosPerSet)
-            val pomodoroTimerState = pomodoroTimerState.first()
-            val currentPhase = pomodoroTimerState.currentPhase
-            val currentTimeTargetInMillis = pomodoroTimerState.timeTargetInMillis
-            val currentTimeLeftInMillis = pomodoroTimerState.timeLeftInMillis
-            val newTimeTargetInMillis =
-                timerPreferences.lengthInMinutesForPhase(currentPhase).minutesToMilliseconds()
-            if (timerPreferences.pomodorosPerSet <= pomodoroTimerState.pomodorosCompletedInSet
-                && currentPhase == PomodoroPhase.POMODORO
-            ) {
-                pomodoroTimerStateManager.updatePomodorosCompletedInSet(0)
-            }
-            val timerWasRunning = pomodoroTimerState.timerRunning
-            // TODO: 21/01/2022 Write tests for below
-            if (newTimeTargetInMillis > currentTimeTargetInMillis) {
-                timer.cancelTimer()
-                pomodoroTimerStateManager.updateTimeLeftInMillis(
-                    currentTimeLeftInMillis + newTimeTargetInMillis - currentTimeTargetInMillis
-                )
-                if (timerWasRunning) {
-                    startTimer()
+                pomodoroTimerStateManager.updatePomodorosPerSetTarget(timerPreferences.pomodorosPerSet)
+                val pomodoroTimerState = pomodoroTimerState.first()
+                val currentPhase = pomodoroTimerState.currentPhase
+                val currentTimeTargetInMillis = pomodoroTimerState.timeTargetInMillis
+                val currentTimeLeftInMillis = pomodoroTimerState.timeLeftInMillis
+                val newTimeTargetInMillis =
+                    timerPreferences.lengthInMinutesForPhase(currentPhase).minutesToMilliseconds()
+                if (timerPreferences.pomodorosPerSet <= pomodoroTimerState.pomodorosCompletedInSet
+                    && currentPhase == PomodoroPhase.POMODORO
+                ) {
+                    pomodoroTimerStateManager.updatePomodorosCompletedInSet(0)
                 }
-            }
-            if (newTimeTargetInMillis < currentTimeTargetInMillis) {
-                timer.cancelTimer()
-                pomodoroTimerStateManager.updateTimeLeftInMillis(
-                    currentTimeLeftInMillis - (currentTimeTargetInMillis - newTimeTargetInMillis)
-                )
-                if (timerWasRunning) {
-                    startTimer()
-                } else {
-                    onTimerFinished()
+                val timerWasRunning = pomodoroTimerState.timerRunning
+                // TODO: 21/01/2022 Write tests for below
+                if (newTimeTargetInMillis > currentTimeTargetInMillis) {
+                    timer.cancelTimer()
+                    pomodoroTimerStateManager.updateTimeLeftInMillis(
+                        currentTimeLeftInMillis + newTimeTargetInMillis - currentTimeTargetInMillis
+                    )
+                    if (timerWasRunning) {
+                        startTimer()
+                    }
                 }
-            }
-            pomodoroTimerStateManager.updateTimeTargetInMillis(newTimeTargetInMillis)
+                if (newTimeTargetInMillis < currentTimeTargetInMillis) {
+                    timer.cancelTimer()
+                    pomodoroTimerStateManager.updateTimeLeftInMillis(
+                        currentTimeLeftInMillis - (currentTimeTargetInMillis - newTimeTargetInMillis)
+                    )
+                    if (timerWasRunning) {
+                        startTimer()
+                    } else {
+                        onTimerFinished()
+                    }
+                }
+                pomodoroTimerStateManager.updateTimeTargetInMillis(newTimeTargetInMillis)
             }
         }
     }
@@ -107,9 +107,9 @@ class PomodoroTimerManager @Inject constructor(
         pomodoroTimerStateManager.updateTimerRunning(true)
     }
 
-    private suspend fun onTimerFinished() {
-        val pomodoroTimerState = pomodoroTimerState.first()
+    private fun onTimerFinished() {
         applicationScope.launch {
+            val pomodoroTimerState = pomodoroTimerState.first()
             val currentPhase = pomodoroTimerState.currentPhase
             println("onFinish phase: $currentPhase")
             notificationHelper.showTimerCompletedNotification(currentPhase)
@@ -125,14 +125,15 @@ class PomodoroTimerManager @Inject constructor(
                 pomodoroTimerStateManager.updatePomodorosCompletedInSet(pomodoroTimerState.pomodorosCompletedInSet + 1)
                 pomodoroTimerStateManager.updatePomodorosCompletedTotal(pomodoroTimerState.pomodorosCompletedTotal + 1)
             }
+            startNextPhase()
+            val autoStartNextTimer = timerPreferences.first().autoStartNextTimer
+            if (autoStartNextTimer) {
+                startTimer()
+            } else {
+                stopTimer()
+            }
         }
-        startNextPhase()
-        val autoStartNextTimer = timerPreferences.first().autoStartNextTimer
-        if (autoStartNextTimer) {
-            startTimer()
-        } else {
-            stopTimer()
-        }
+
     }
 
     private suspend fun stopTimer() {

@@ -52,6 +52,7 @@ class TimerViewModelTest {
             initialShortBreakLengthInMinutes = 5,
             initialLongBreakLengthInMinutes = 15,
             initialPomodorosPerSet = 4,
+            initialAutoStartNextTimer = true,
         )
         fakePomodoroTimerStateManager = FakePomodoroTimerStateManager()
         fakeNotificationHelper = FakeNotificationHelper()
@@ -171,6 +172,31 @@ class TimerViewModelTest {
     }
 
     @Test
+    fun finishTimer_autoStartNextTimerTrue_keepsTimerRunning() = testScope.runTest {
+        runCurrent()
+        timerViewModel.onStartStopTimerClicked()
+        advanceTimeBy(25.minutesToMilliseconds())
+        fakeTimeSource.advanceTimeBy(25.minutesToMilliseconds())
+        runCurrent()
+
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue().timerRunning).isTrue()
+
+        timerViewModel.onStartStopTimerClicked()
+    }
+
+    @Test
+    fun finishTimer_autoStartNextTimerFalse_stopsTimer() = testScope.runTest {
+        fakePreferencesManager.updateAutoStartNextTimer(false)
+        runCurrent()
+        timerViewModel.onStartStopTimerClicked()
+        advanceTimeBy(25.minutesToMilliseconds())
+        fakeTimeSource.advanceTimeBy(25.minutesToMilliseconds())
+        runCurrent()
+
+        assertThat(timerViewModel.pomodoroTimerState.getOrAwaitValue().timerRunning).isFalse()
+    }
+
+    @Test
     fun onStartStopTimerClicked_removesTimerCompletedNotification() = testScope.runTest {
         runCurrent()
         timerViewModel.onStartStopTimerClicked()
@@ -200,20 +226,21 @@ class TimerViewModelTest {
     }
 
     @Test
-    fun onStartStopTimerClicked_timerNotRunning_removesResumeTimerNotification() = testScope.runTest {
-        fakeNotificationHelper.showResumeTimerNotification(
-            currentPhase = defaultTimerState.currentPhase,
-            timeLeftInMillis = defaultTimerState.timeLeftInMillis,
-        )
-        timerViewModel.onStartStopTimerClicked()
-        runCurrent()
+    fun onStartStopTimerClicked_timerNotRunning_removesResumeTimerNotification() =
+        testScope.runTest {
+            fakeNotificationHelper.showResumeTimerNotification(
+                currentPhase = defaultTimerState.currentPhase,
+                timeLeftInMillis = defaultTimerState.timeLeftInMillis,
+            )
+            timerViewModel.onStartStopTimerClicked()
+            runCurrent()
 
-        assertThat(fakeNotificationHelper.resumeTimerNotification).isEqualTo(
-            ResumeTimerNotificationState.NotShown
-        )
+            assertThat(fakeNotificationHelper.resumeTimerNotification).isEqualTo(
+                ResumeTimerNotificationState.NotShown
+            )
 
-        timerViewModel.onStartStopTimerClicked()
-    }
+            timerViewModel.onStartStopTimerClicked()
+        }
 
     @Test
     fun onStartStopTimerClicked_timerNotRunning_startsTimerService() = testScope.runTest {
@@ -226,7 +253,7 @@ class TimerViewModelTest {
     }
 
     @Test
-    fun onStartStopTimerClicked_timerNotRunning_setsTimerRunningTrue() =testScope.runTest {
+    fun onStartStopTimerClicked_timerNotRunning_setsTimerRunningTrue() = testScope.runTest {
         timerViewModel.onStartStopTimerClicked()
         runCurrent()
 

@@ -83,16 +83,11 @@ class DefaultPomodoroTimerStateManager @Inject constructor(
                     pomodorosCompletedInSet = pomodorosCompletedInSet,
                     pomodorosCompletedTotal = pomodorosCompletedTotal,
                 )
-            }.onEach {
-                logcat { "onEach with timerRunning = ${it.timerRunning}" }
             }
 
     override suspend fun updateTimerRunning(timerRunning: Boolean) {
-        logcat { "updateTimerRunning with timerRunning = $timerRunning" }
         context.dataStore.edit { preferences ->
-            logcat { "before " + preferences[PreferencesKeys.TIMER_RUNNING].toString() }
             preferences[PreferencesKeys.TIMER_RUNNING] = timerRunning
-            logcat { "after " + preferences[PreferencesKeys.TIMER_RUNNING].toString() }
         }
     }
 

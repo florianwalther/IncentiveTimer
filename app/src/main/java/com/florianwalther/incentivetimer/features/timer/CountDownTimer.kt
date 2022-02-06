@@ -23,7 +23,7 @@ class CountDownTimer @Inject constructor(
         durationMillis: Long,
         countDownInterval: Long,
         onTick: suspend (millisUntilFinished: Long) -> Unit,
-        onFinish: suspend () -> Unit,
+        onFinish: () -> Unit,
     ) {
         millisUntilFinished = durationMillis
         val startTime = timeSource.elapsedRealTime
