@@ -142,7 +142,6 @@ class PomodoroTimerManager @Inject constructor(
                 stopTimer()
             }
         }
-
     }
 
     fun skipBreak() {
