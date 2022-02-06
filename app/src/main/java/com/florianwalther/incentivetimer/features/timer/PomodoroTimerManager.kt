@@ -28,6 +28,7 @@ class PomodoroTimerManager @Inject constructor(
     private val notificationHelper: NotificationHelper,
     private val rewardUnlockManager: RewardUnlockManager,
     private val pomodoroStatisticDao: PomodoroStatisticDao,
+    private val dailyResetManager: DailyResetManager,
     @ApplicationScope private val applicationScope: CoroutineScope,
 ) {
     private val timerPreferences = preferencesManager.timerPreferences
@@ -105,6 +106,14 @@ class PomodoroTimerManager @Inject constructor(
         )
         timerServiceManager.startTimerService()
         pomodoroTimerStateManager.updateTimerRunning(true)
+        dailyResetManager.stopDailyReset()
+    }
+
+    private suspend fun stopTimer() {
+        timer.cancelTimer()
+        timerServiceManager.stopTimerService()
+        pomodoroTimerStateManager.updateTimerRunning(false)
+        dailyResetManager.scheduleDailyReset()
     }
 
     private fun onTimerFinished() {
@@ -134,12 +143,6 @@ class PomodoroTimerManager @Inject constructor(
             }
         }
 
-    }
-
-    private suspend fun stopTimer() {
-        timer.cancelTimer()
-        timerServiceManager.stopTimerService()
-        pomodoroTimerStateManager.updateTimerRunning(false)
     }
 
     fun skipBreak() {
